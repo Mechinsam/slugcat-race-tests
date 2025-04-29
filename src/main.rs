@@ -1,4 +1,5 @@
 use raylib::prelude::*;
+use std::slice;
 
 mod entity;
 mod physics;
@@ -9,7 +10,36 @@ const SCREEN_HEIGHT: i32 = 768;
 const MAXFPS: u32 = 75;
 const DRAWFPS: bool = true;
 
-fn main() {
+
+fn texture_to_collision_mask(texture: &Texture2D) -> Vec<bool> {
+	// 1. Download GPU texture into an Image (CPU RAM)
+	let image: Image = texture
+		.load_image()
+		.expect("Failed to read texture pixels");
+	
+	// 2. Compute total pixel count
+	let total_px = (image.width * image.height) as usize;
+	
+	// 3. SAFELY interpret `data` pointer as &[ffi::Color]
+	let colors: &[raylib::ffi::Color] = unsafe {
+		slice::from_raw_parts(
+			image.data as *const raylib::ffi::Color,
+			total_px,
+		)
+	};
+	
+	// 4. Build a simple bitmask: opaque pixels (alpha > 0) = collision
+	colors.iter()
+		  .map(|c| c.a > 0)        // alpha > 0 → solid, alpha == 0 → empty
+		  .collect()
+}
+
+
+
+
+fn main()
+{
+	//let mut delta_time: f32 = 1f32/(MAXFPS as f32);
 	let mut viewport: rendersystem::Viewport = rendersystem::Viewport::init(
 		"srt64",
 		SCREEN_WIDTH,
@@ -18,15 +48,20 @@ fn main() {
 	);
 	
 	let mut specimen: entity::Entity = entity::Entity::new(viewport.load_image("DATA/slugcat1.png"));
+	let map_image: Texture2D = viewport.load_image("DATA/map1.png");
+	let map: Vec<bool> = texture_to_collision_mask(&map_image);
 
 	while !viewport.window.window_should_close() {
-		let mut drawer = viewport.window.begin_drawing(&viewport.thread);
+		let delta_time: f32 = viewport.window.get_frame_time();
+		let mut drawer: RaylibDrawHandle<'_> = viewport.window.begin_drawing(&viewport.thread);
 
-		specimen.update(SCREEN_WIDTH, SCREEN_HEIGHT);
+		drawer.clear_background(Color::BLACK);
+
+		specimen.update(SCREEN_WIDTH, SCREEN_HEIGHT, delta_time, &map, SCREEN_WIDTH, SCREEN_HEIGHT);
 
 		//drawer.draw_text("I LOVE SKIBIDI TOILET.", 24, 24, 48, Color::MAROON);
-		drawer.clear_background(Color::BLACK);
 		specimen.draw(&mut drawer);
+		drawer.draw_texture(&map_image, 0, 0, Color::WHITE);
 		
 		//drawer.draw_texture(&spec, 100, 100, Color::WHITE);
 
