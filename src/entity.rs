@@ -38,23 +38,6 @@ impl Entity
 		}
 	}
 
-	pub fn old_update(&mut self, screen_width: i32, screen_height: i32, delta_time: f32)
-	{
-		self.position.x += self.speed.x * delta_time;
-		self.position.y += self.speed.y * delta_time;
-
-		// Collision
-		if self.position.x < 0.0 || self.position.x + self.texture.width() as f32 > screen_width as f32
-		{
-			self.speed.x = -self.speed.x;
-		}
-		if self.position.y < 0.0 || self.position.y + self.texture.height() as f32 > screen_height as f32
-		{
-			self.speed.y = -self.speed.y;
-		}
-	}
-
-
 	// I wouldn't try to touch this if i were you..... i have no clue what half of this function does but it works
 	pub fn update(&mut self, screen_width: i32, screen_height: i32, delta_time: f32, mask: &[bool], mask_width: i32, mask_height: i32)
 	{
