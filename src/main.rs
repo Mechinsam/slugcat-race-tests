@@ -11,6 +11,7 @@ const DRAWFPS: bool = true;
 
 fn main() {
 	let mut viewport: rendersystem::Viewport = rendersystem::Viewport::init(
+		"srt64",
 		SCREEN_WIDTH,
 		SCREEN_HEIGHT,
 		MAXFPS

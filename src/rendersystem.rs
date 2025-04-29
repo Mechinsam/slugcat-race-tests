@@ -10,11 +10,11 @@ pub struct Viewport
 impl Viewport
 {
 	// Constructor
-	pub fn init(screen_width: i32, screen_height: i32, maxfps: u32) -> Self
+	pub fn init(title: &str, screen_width: i32, screen_height: i32, maxfps: u32) -> Self
 	{
 		let (mut window, thread) = raylib::init()
 			.size(screen_width, screen_height)
-			.title("SOIL64")
+			.title(title)
 			//.vsync()
 			.build();
 
