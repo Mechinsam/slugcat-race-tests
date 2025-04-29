@@ -54,62 +54,67 @@ impl Entity
 		}
 	}
 
+
+	// I wouldn't try to touch this if i were you..... i have no clue what half of this function does but it works
 	pub fn update(&mut self, screen_width: i32, screen_height: i32, delta_time: f32, mask: &[bool], mask_width: i32, mask_height: i32)
 	{
-		// predict the next position
-		let mut dest = Vector2::new(0f32, 0f32);
+		let mut dest: Vector2 = Vector2::new(0f32, 0f32);
 		dest.x = self.position.x + self.speed.x * delta_time;
 		dest.y = self.position.y + self.speed.y * delta_time;
-
-
+	
 		// x-axis collision check
-		let mut collided_x: bool = false;
-		for y in 0..self.height
-		{
-			let check_pos = Vector2::new(dest.x, self.position.y + y as f32);
-			if mask_solid(check_pos, mask, mask_width, mask_height)
-			{
-				collided_x = true;
+		if self.speed.x != 0.0 {
+			let edge_x = if self.speed.x > 0.0 {
+				dest.x + self.width as f32 - 1.0   // right edge
+		} else {
+			dest.x
+		};
+		let mut hit_x = false;
+		for y_off in 0..(self.height as f32 as i32) {
+			let sample = Vector2::new(edge_x, self.position.y + y_off as f32);
+			if mask_solid(sample, mask, mask_width, mask_height) {
+				hit_x = true;
 				break;
-			}
+		 }
 		}
-
-		if collided_x
-		{
-			self.speed.x = -self.speed.x;
+		if hit_x {
+		 self.speed.x = -self.speed.x;  // bounce on X
 		} else {
-			self.position.x = dest.x;
+		 self.position.x = dest.x;      // commit X
+		}
+		}
+	
+		// 3. Vertical axis: choose leading edge and sample width
+		if self.speed.y != 0.0 {
+		 let edge_y = if self.speed.y > 0.0 {
+			 dest.y + self.height as f32 - 1.0   // bottom edge
+		 } else {
+			 dest.y            // top edge
+		 };
+		 let mut hit_y = false;
+		 for x_off in 0..(self.width as f32 as i32) {
+			 let sample = Vector2::new(self.position.x + x_off as f32, edge_y);
+			 if mask_solid(sample, mask, mask_width, mask_height) {
+				 hit_y = true;
+				 break;
+			 }
+		 }
+		 if hit_y {
+			 self.speed.y = -self.speed.y;
+		 } else {
+			 self.position.y = dest.y;
+		 }
 		}
 
-		// y-axis collision check
-		let mut collided_y: bool = false;
-		for x in 0..self.width
+		// screen collisions
+		if self.position.x < 0f32 || self.position.x + self.width as f32 > screen_width as f32
 		{
-			let check_pos = Vector2::new(self.position.x + x as f32, dest.y);
-			if mask_solid(check_pos, mask, mask_width, mask_height)
-			{
-				collided_y = true;
-				break;
-			}
+			self.speed.x = -self.speed.x
 		}
-
-		if collided_y
+		if self.position.x < 0f32 || self.position.x + self.width as f32 > screen_width as f32
 		{
-			self.speed.y = -self.speed.y;
-		} else {
-			self.position.y = dest.y;
+			self.speed.x = -self.speed.x
 		}
-
-		// collision check
-		/*if !mask_solid(dest, mask, mask_width, mask_height)
-		{
-			// no collision detected
-			self.position = dest;
-		} else {
-			println!("ough");
-			self.speed.x = -self.speed.x;
-			self.speed.y = -self.speed.y;
-		}*/
 	}
 
 	pub fn draw(&self, drawer: &mut RaylibDrawHandle)

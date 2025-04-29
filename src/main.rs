@@ -12,15 +12,14 @@ const DRAWFPS: bool = true;
 
 
 fn texture_to_collision_mask(texture: &Texture2D) -> Vec<bool> {
-	// 1. Download GPU texture into an Image (CPU RAM)
 	let image: Image = texture
 		.load_image()
-		.expect("Failed to read texture pixels");
+		.expect("Failed to read image");
 	
-	// 2. Compute total pixel count
+	// calculate total pixel count
 	let total_px = (image.width * image.height) as usize;
 	
-	// 3. SAFELY interpret `data` pointer as &[ffi::Color]
+	// interpret `data` pointer as color
 	let colors: &[raylib::ffi::Color] = unsafe {
 		slice::from_raw_parts(
 			image.data as *const raylib::ffi::Color,
@@ -28,9 +27,9 @@ fn texture_to_collision_mask(texture: &Texture2D) -> Vec<bool> {
 		)
 	};
 	
-	// 4. Build a simple bitmask: opaque pixels (alpha > 0) = collision
+	// make a simple bitmask (opaque pixels (alpha < 25%) = collision)
 	colors.iter()
-		  .map(|c| c.a > 0)        // alpha > 0 → solid, alpha == 0 → empty
+		  .map(|c| c.a > 64) // 64/255 is like almost 25%
 		  .collect()
 }
 
