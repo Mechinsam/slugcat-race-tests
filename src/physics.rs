@@ -1,3 +1,4 @@
+// Despite being called physics, it does not handle physics. this is only here for the Vector2 struct.. lol..
 pub struct Vector2
 {
 	pub x: f32,

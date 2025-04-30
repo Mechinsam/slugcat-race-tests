@@ -11,10 +11,12 @@ const MAXFPS: u32 = 75;
 const DRAWFPS: bool = true;
 
 
-fn texture_to_collision_mask(texture: &Texture2D) -> Vec<bool> {
-	let image: Image = texture
+fn texture_to_collision_mask(texture: &Texture2D, scale: f32) -> Vec<bool> {
+	let mut image: Image = texture
 		.load_image()
 		.expect("Failed to read image");
+
+	image.resize((texture.width() as f32 * scale) as i32, (texture.height() as f32 * scale) as i32);
 	
 	// calculate total pixel count
 	let total_px = (image.width * image.height) as usize;
@@ -33,9 +35,6 @@ fn texture_to_collision_mask(texture: &Texture2D) -> Vec<bool> {
 		  .collect()
 }
 
-
-
-
 fn main()
 {
 	//let mut delta_time: f32 = 1f32/(MAXFPS as f32);
@@ -46,9 +45,9 @@ fn main()
 		MAXFPS
 	);
 	
-	let mut specimen: entity::Entity = entity::Entity::new(viewport.load_image("DATA/slugcat1.png"));
+	let mut specimen: entity::Entity = entity::Entity::new(viewport.load_image("DATA/slugcat1.png"), 0.5);
 	let map_image: Texture2D = viewport.load_image("DATA/map1.png");
-	let map: Vec<bool> = texture_to_collision_mask(&map_image);
+	let map: Vec<bool> = texture_to_collision_mask(&map_image, 1f32);
 
 	while !viewport.window.window_should_close() {
 		let delta_time: f32 = viewport.window.get_frame_time();
