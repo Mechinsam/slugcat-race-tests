@@ -2,7 +2,6 @@ use raylib::prelude::*;
 use std::slice;
 
 mod entity;
-mod physics;
 mod rendersystem;
 
 const SCREEN_WIDTH: i32 = 1024;
