@@ -58,7 +58,6 @@ fn main()
 
 		specimen.update(SCREEN_WIDTH, SCREEN_HEIGHT, delta_time, &map.col_map, SCREEN_WIDTH, SCREEN_HEIGHT);
 
-		//drawer.draw_text("I LOVE SKIBIDI TOILET.", 24, 24, 48, Color::MAROON);
 		drawer.draw_texture(&map.background, 0, 0, Color::WHITE);
 		specimen.draw(&mut drawer);
 		
