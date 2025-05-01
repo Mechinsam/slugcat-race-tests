@@ -133,13 +133,12 @@ fn main()
 			drawer.draw_texture(&map.background, 0, 0, Color::WHITE);
 			
 			// Render Slugcats
-			if slugcats_should_move
+			for racer in &mut slugcats
 			{
-				for racer in &mut slugcats
-				{
+				if slugcats_should_move {
 					racer.update(SCREEN_WIDTH, SCREEN_HEIGHT, delta_time, &map.col_map, SCREEN_WIDTH, SCREEN_HEIGHT);
-					racer.draw(&mut drawer);
 				}
+				racer.draw(&mut drawer);
 			}
 
 			// Render food
