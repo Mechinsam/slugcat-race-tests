@@ -90,7 +90,7 @@ impl Slugcat
 {
 	pub fn new(texture: Texture2D, scale: f32) -> Self
 	{
-		let entity = Entity::new(texture, scale);
+		let entity: Entity = Entity::new(texture, scale);
 
 		Slugcat {entity}
 	}
@@ -169,5 +169,21 @@ impl Slugcat
 		if self.position.y < 0.0 || self.position.y + self.height as f32 > screen_height as f32 {
 			self.speed.y = -self.speed.y;
 		}
+	}
+}
+
+impl Food
+{
+	pub fn new(texture: Texture2D, scale: f32, position: Vector2) -> Self
+	{
+		let mut entity: Entity = Entity::new(texture, scale);
+		entity.position = position;
+
+		Food {entity}
+	}
+
+	pub fn draw(&self, drawer: &mut RaylibDrawHandle)
+	{
+		drawer.draw_texture_ex(&self.texture, self.position, 0f32, self.scale, Color::WHITE);
 	}
 }
