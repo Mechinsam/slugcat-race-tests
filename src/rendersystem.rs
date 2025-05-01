@@ -37,6 +37,11 @@ impl Viewport
 		self.window.set_window_title(&self.thread, new_title);
 	}
 
+	pub fn get_mouse_position(&mut self) -> Vector2
+	{
+		return self.window.get_mouse_position();
+	}
+
 	pub fn load_image(&mut self, filename: &str) -> Texture2D
 	{
 		let image: Texture2D = self.window.load_texture(&self.thread, filename).expect("Failed to load texture");

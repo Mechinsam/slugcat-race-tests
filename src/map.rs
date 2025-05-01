@@ -2,6 +2,7 @@ use raylib::prelude::*;
 use std::{collections::HashMap, fs};
 use serde_json::Value;
 
+use crate::entity::Food;
 use crate::texture_to_collision_mask;
 use crate::rendersystem::Viewport;
 
@@ -13,7 +14,7 @@ pub struct Map
 	pub food_spawn_pos: Vector2,
 	pub gate_spawn_pos: Vector2,
 
-	food: Texture2D
+	pub food: Food
 }
 
 impl Map
@@ -56,19 +57,23 @@ impl Map
 		
 		println!("{}", food_spawn_pos.x);
 
-		let gate_spawn_pos: Vector2 = metadata.get("gate_spawn_pos")
-			.and_then(Value::as_object)
-			.map_or(Vector2::new(0.0, 0.0), |obj: &serde_json::Map<String, Value>|
-			{
-				Vector2::new(
-					obj.get("x").and_then(Value::as_f64).unwrap_or(0.0) as f32,
-					obj.get("y").and_then(Value::as_f64).unwrap_or(0.0) as f32,
-				)
-			});
+		// THIS SHIT DOESNT WORK AND NEEDS CHANGING EVENTUALLY!!!!!!!
+		let gate_spawn_pos: Vector2 = metadata
+			.get("gate_spawn_pos")
+			.and_then(Value::as_array)             // <— parse as array
+			.and_then(|arr| {
+				if arr.len() >= 2 {
+				// extract x, y from arr[0], arr[1]
+				let x = arr[0].as_f64().unwrap_or(0.0) as f32;
+				let y = arr[1].as_f64().unwrap_or(0.0) as f32;
+				Some(Vector2::new(x, y))
+			} else {
+				None
+			}
+		}).unwrap_or_else(|| Vector2::new(0.0, 0.0));
 		
 		// Food
-		let food = viewport.load_image("DATA/food.png");
-
+		let food: Food = Food::new(viewport.load_image("DATA/food.png"), 0.45, food_spawn_pos);
 
 		Map {
 			map_name,
@@ -78,10 +83,5 @@ impl Map
 			gate_spawn_pos,
 			food
 		}
-	}
-
-	pub fn draw_food(&self, drawer: &mut RaylibDrawHandle)
-	{
-		drawer.draw_texture_ex(&self.food, self.food_spawn_pos, 0f32, 0.4, Color::WHITE);
 	}
 }

@@ -88,9 +88,10 @@ impl Entity
 
 impl Slugcat
 {
-	pub fn new(texture: Texture2D, scale: f32) -> Self
+	pub fn new(texture: Texture2D, scale: f32, position: Vector2) -> Self
 	{
-		let entity: Entity = Entity::new(texture, scale);
+		let mut entity: Entity = Entity::new(texture, scale);
+		entity.position = position;
 
 		Slugcat {entity}
 	}
@@ -180,10 +181,5 @@ impl Food
 		entity.position = position;
 
 		Food {entity}
-	}
-
-	pub fn draw(&self, drawer: &mut RaylibDrawHandle)
-	{
-		drawer.draw_texture_ex(&self.texture, self.position, 0f32, self.scale, Color::WHITE);
 	}
 }
