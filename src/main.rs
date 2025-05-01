@@ -7,7 +7,7 @@ mod rendersystem;
 
 const SCREEN_WIDTH: i32 = 1024;
 const SCREEN_HEIGHT: i32 = 768;
-const MAXFPS: u32 = 300;
+const MAXFPS: u32 = 75;
 const DRAWFPS: bool = true;
 
 
