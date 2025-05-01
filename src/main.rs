@@ -16,7 +16,7 @@ fn load_racers(viewport: &mut Viewport) -> Vec<entity::Entity>
 	let dir: &str = "DATA/racers/sprites";
 	let entries: fs::ReadDir = fs::read_dir(dir).expect(&format!("Failed to read {}", dir));
 
-	// get racers from directory
+	// get slugcats from directory
 	let racer_textures: Vec<String> = entries
         .filter_map(Result::ok)
         .filter_map(|entry| {
@@ -31,10 +31,10 @@ fn load_racers(viewport: &mut Viewport) -> Vec<entity::Entity>
         })
         .collect();
 
-	let mut racers: Vec<entity::Entity> = Vec::new();
+	let mut slugcats: Vec<entity::Entity> = Vec::new();
 
 	let mut counter: i32 = 1;
-	let racers_spacing: i32 = 10; // Distance between racers. Kind of like... padding
+	let racers_spacing: i32 = 10; // Distance between slugcats. Kind of like... padding
 
 	for racer_texture_path in racer_textures
 	{
@@ -48,12 +48,12 @@ fn load_racers(viewport: &mut Viewport) -> Vec<entity::Entity>
 		}
 		
 
-		racers.push(entity);
+		slugcats.push(entity);
 
 		counter += 1;
 	}
 	
-	return racers;
+	return slugcats;
 }
 
 fn texture_to_collision_mask(texture: &Texture2D, scale: f32) -> Vec<bool>
@@ -92,7 +92,7 @@ fn main()
 	);
 	load_racers(&mut viewport);
 	let map: map::Map = map::Map::new("map1", &mut viewport);
-	let mut racers: Vec<entity::Entity> = load_racers(&mut viewport);
+	let mut slugcats: Vec<entity::Entity> = load_racers(&mut viewport);
 
 	// Game loop
 	while !viewport.window.window_should_close() {
@@ -103,7 +103,7 @@ fn main()
 
 		drawer.draw_texture(&map.background, 0, 0, Color::WHITE);
 		
-		for racer in &mut racers
+		for racer in &mut slugcats
 		{
 			racer.update(SCREEN_WIDTH, SCREEN_HEIGHT, delta_time, &map.col_map, SCREEN_WIDTH, SCREEN_HEIGHT);
 			racer.draw(&mut drawer);
