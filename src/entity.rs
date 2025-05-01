@@ -182,4 +182,34 @@ impl Food
 
 		Food {entity}
 	}
+
+	// Food does not use pixel perfect collisions but still initilises it when calling Food::new. [TODO] remove that somehow
+	pub fn update(&self, slugcats: &Vec<Slugcat>) -> bool
+	{
+		let food_col_box: Rectangle = Rectangle::new(
+			self.position.x,
+			self.position.y,
+			self.width as f32,
+			self.height as f32,
+		);
+
+		// Create slugcat collision box and check for collisions
+		for slugcat in slugcats
+		{
+			let slugcat_col_box: Rectangle = Rectangle::new(
+				slugcat.position.x,
+				slugcat.position.y,
+				slugcat.width as f32,
+				slugcat.height as f32
+			);
+
+			if slugcat_col_box.check_collision_recs(&food_col_box)
+			{
+				println!("yeah im eating this shit");
+				return true;
+			}
+		}
+
+		return false;
+	}
 }

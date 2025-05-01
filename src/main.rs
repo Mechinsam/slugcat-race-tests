@@ -3,14 +3,17 @@ use rendersystem::Viewport;
 use std::{slice, fs};
 
 mod entity;
+mod gamestates;
 mod map;
 mod rendersystem;
+
+use crate::gamestates::GameState; // i dont feel like typing out gamestates::GameState all the time lol
 
 const SCREEN_WIDTH: i32 = 1024;
 const SCREEN_HEIGHT: i32 = 768;
 const MAXFPS: u32 = 75;
 
-fn load_racers(viewport: &mut Viewport, gate_spawn_pos: Vector2) -> Vec<entity::Slugcat>
+pub fn load_racers(viewport: &mut Viewport, gate_spawn_pos: Vector2) -> Vec<entity::Slugcat>
 {
 	let dir: &str = "DATA/racers/sprites";
 	let entries: fs::ReadDir = fs::read_dir(dir).expect(&format!("Failed to read {}", dir));
@@ -55,7 +58,7 @@ fn load_racers(viewport: &mut Viewport, gate_spawn_pos: Vector2) -> Vec<entity::
 	return slugcats;
 }
 
-fn texture_to_collision_mask(texture: &Texture2D, scale: f32) -> Vec<bool>
+pub fn texture_to_collision_mask(texture: &Texture2D, scale: f32) -> Vec<bool>
 {
 	let mut image: Image = texture
 		.load_image()
@@ -83,9 +86,9 @@ fn texture_to_collision_mask(texture: &Texture2D, scale: f32) -> Vec<bool>
 fn main()
 {
 	// Game vars
-	let mut state: &str = "in_race"; // Either "in_race" or "win"
-	let slugcats_should_move: bool = false; // Set to 'true' to ignore countdown
-	let mut show_debug: bool = true;
+	let mut game_state = GameState::InRace; // Either "InRace" or "win"
+	let slugcats_should_move: bool = true; // Set to 'true' to ignore countdown (not implemented yet)
+	let mut show_debug: bool = false;
 
 	let mut viewport: rendersystem::Viewport = rendersystem::Viewport::init(
 		"SRT (idling)",
@@ -99,7 +102,9 @@ fn main()
 	let map: map::Map = map::Map::new("Blocks", &mut viewport);
 	let mut slugcats: Vec<entity::Slugcat> = load_racers(&mut viewport, map.gate_spawn_pos);
 
-	if state == "in_race" {
+	let win_image: Texture2D = viewport.load_image("DATA/win.png");
+
+	if game_state == GameState::InRace {
 		viewport.change_title(&format!("SRT ({})", map.map_name));
 	}
 
@@ -122,7 +127,7 @@ fn main()
 		drawer.clear_background(Color::BLACK);
 
 		
-		if state == "in_race"
+		if game_state == GameState::InRace
 		{
 			// Background priority
 			drawer.draw_texture(&map.background, 0, 0, Color::WHITE);
@@ -137,11 +142,22 @@ fn main()
 			}
 
 			// Render food
+			let is_food_collided = map.food.update(&slugcats);
+
+			if is_food_collided
+			{
+				game_state = GameState::Win;
+			}
+
 			map.food.draw(&mut drawer);
+		}
+		else if game_state == GameState::Win
+		{
+			drawer.draw_texture(&win_image, 0, 0, Color::WHITE);	
 		}
 		else
 		{
-			drawer.draw_text("YOU FUCKED UP!", (SCREEN_WIDTH/2) as i32, (SCREEN_HEIGHT/2) as i32, 24, Color::WHITE);
+			drawer.draw_text("fin", (SCREEN_WIDTH/2) as i32, (SCREEN_HEIGHT/2) as i32, 24, Color::WHITE);
 		}
 
 		if show_debug
