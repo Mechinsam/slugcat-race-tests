@@ -33,12 +33,24 @@ fn load_racers(viewport: &mut Viewport) -> Vec<entity::Entity>
 
 	let mut racers: Vec<entity::Entity> = Vec::new();
 
+	let mut counter: i32 = 1;
+	let racers_spacing: i32 = 10; // Distance between racers. Kind of like... padding
+
 	for racer_texture_path in racer_textures
 	{
 		let racer_texture_path: String = format!("DATA/racers/sprites/{}", racer_texture_path);
 
-		let entity: entity::Entity = entity::Entity::new(viewport.load_image(&racer_texture_path), 0.25);
+		let mut entity: entity::Entity = entity::Entity::new(viewport.load_image(&racer_texture_path), 0.25);
+		let width: i32 = entity.texture.width() + racers_spacing;
+
+		for i in 0..counter {
+			entity.position.x += width as f32 * entity.scale;
+		}
+		
+
 		racers.push(entity);
+
+		counter += 1;
 	}
 	
 	return racers;
@@ -91,11 +103,13 @@ fn main()
 
 		drawer.draw_texture(&map.background, 0, 0, Color::WHITE);
 		
-		for mut racer in &mut racers
+		for racer in &mut racers
 		{
 			racer.update(SCREEN_WIDTH, SCREEN_HEIGHT, delta_time, &map.col_map, SCREEN_WIDTH, SCREEN_HEIGHT);
 			racer.draw(&mut drawer);
 		}
+
+		map.draw_food(&mut drawer);
 		
 		//drawer.draw_texture(&spec, 100, 100, Color::WHITE);
 

@@ -11,7 +11,9 @@ pub struct Map
 	pub background: Texture2D,
 	pub col_map: Vec<bool>,
 	pub food_spawn_pos: Vector2,
-	pub gate_spawn_pos: Vector2
+	pub gate_spawn_pos: Vector2,
+
+	food: Texture2D
 }
 
 impl Map
@@ -36,18 +38,23 @@ impl Map
 		let metadata_file: String = fs::read_to_string(&metadata_location).expect("Failed to read map metadata");
 
 		let metadata: HashMap<String, Value> = serde_json::from_str(&metadata_file).expect("Failed to parse map metadata");
-		println!("{:?}", metadata.get("food_spawn_pos"));
 
 		// i couldnt think of a simplier way :p
-		let food_spawn_pos: Vector2 = metadata.get("food_spawn_pos")
-			.and_then(Value::as_object)
-			.map_or(Vector2::new(0.0, 0.0), |obj: &serde_json::Map<String, Value>|
-			{
-				Vector2::new(
-					obj.get("x").and_then(Value::as_f64).unwrap_or(0.0) as f32,
-					obj.get("y").and_then(Value::as_f64).unwrap_or(0.0) as f32,
-				)
-			});
+		let food_spawn_pos: Vector2 = metadata
+			.get("food_spawn_pos")
+			.and_then(Value::as_array)             // <— parse as array
+			.and_then(|arr| {
+				if arr.len() >= 2 {
+				// extract x, y from arr[0], arr[1]
+				let x = arr[0].as_f64().unwrap_or(0.0) as f32;
+				let y = arr[1].as_f64().unwrap_or(0.0) as f32;
+				Some(Vector2::new(x, y))
+			} else {
+				None
+			}
+		}).unwrap_or_else(|| Vector2::new(0.0, 0.0));
+		
+		println!("{}", food_spawn_pos.x);
 
 		let gate_spawn_pos: Vector2 = metadata.get("gate_spawn_pos")
 			.and_then(Value::as_object)
@@ -59,13 +66,22 @@ impl Map
 				)
 			});
 		
+		// Food
+		let food = viewport.load_image("DATA/food.png");
+
 
 		Map {
 			map_name,
 			background,
 			col_map,
 			food_spawn_pos,
-			gate_spawn_pos
+			gate_spawn_pos,
+			food
 		}
+	}
+
+	pub fn draw_food(&self, drawer: &mut RaylibDrawHandle)
+	{
+		drawer.draw_texture_ex(&self.food, self.food_spawn_pos, 0f32, 0.4, Color::WHITE);
 	}
 }

@@ -16,7 +16,7 @@ pub struct Entity
 	width: i32,
 	height: i32,
 	mask: Vec<bool>,
-	scale: f32
+	pub scale: f32
 }
 
 impl Entity
