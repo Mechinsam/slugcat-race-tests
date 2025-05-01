@@ -9,7 +9,6 @@ mod rendersystem;
 const SCREEN_WIDTH: i32 = 1024;
 const SCREEN_HEIGHT: i32 = 768;
 const MAXFPS: u32 = 75;
-const DRAWFPS: bool = true;
 
 fn load_racers(viewport: &mut Viewport, gate_spawn_pos: Vector2) -> Vec<entity::Slugcat>
 {
@@ -147,10 +146,8 @@ fn main()
 
 		if show_debug
 		{
-			// Render FPS if needed
-			if DRAWFPS {
-				drawer.draw_fps(0, 0);
-			}
+			// Render FPS 
+			drawer.draw_fps(0, 0);
 
 			// Display mouse position
 			let mouse_pos_text: String = format!("MOUSE POS: ({}, {})", mouse_pos.x, mouse_pos.y);
