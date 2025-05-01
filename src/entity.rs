@@ -1,18 +1,10 @@
 use raylib::prelude::*;
-//use rand::Rng;
+use rand::Rng;
 
 use crate::texture_to_collision_mask;
 
-// ima be fr idk how the fuck this works but it calculates collisions
-/*fn mask_solid(position: Vector2, mask: &[bool], mask_width: i32, mask_height: i32) -> bool
-{
-	if position.x < 0f32 || position.y < 0f32 || position.x >= mask_width as f32 || position.y >= mask_height as f32
-	{
-		return false;
-	}
-
-	return mask[(position.y.floor() as i32 * mask_width + position.x.floor() as i32) as usize];
-}*/
+const MIN_SPEED: i32 = 200;
+const MAX_SPEED: i32 = 300;
 
 pub struct Entity
 {
@@ -32,13 +24,13 @@ impl Entity
 	// PLEAAAAASE for the love of god make sure your 'scale' value for your entity WILL MEAN WIDTH AND HEIGHT WILL BE A WHOLE NUMBER
 	pub fn new(texture: Texture2D, scale: f32) -> Self
 	{
-		let mask: Vec<bool> = texture_to_collision_mask(&texture, 0.5);
+		let mask: Vec<bool> = texture_to_collision_mask(&texture, scale);
 
 		let width: i32 = (texture.width() as f32 * scale) as i32;
 		let height: i32 = (texture.height() as f32 * scale) as i32;
 
 		Entity {
-			position: Vector2::new(200f32, 200f32),
+			position: Vector2::new(300f32, 200f32),
 			speed: Vector2::new(200f32, 200f32),
 			texture,
 			width,
@@ -58,6 +50,7 @@ impl Entity
 		mask_width: i32,
 		mask_height: i32,
 	) {
+		let mut rng = rand::rng();
 		// compute proposed positions
 		let next_x = self.position.x + self.speed.x * delta_time;
 		let next_y = self.position.y + self.speed.y * delta_time;
@@ -81,9 +74,11 @@ impl Entity
 			}
 		}
 		if collided_x {
-			self.speed.x = -self.speed.x;                      // reverse only X
+			// Signum returns 1.0 for positive numbers and -1.0 for negative numbers
+			// Used to reverse directions easily
+			self.speed.x = -self.speed.x.signum() * rng.random_range(MIN_SPEED..MAX_SPEED) as f32;
 		} else {
-			self.position.x = next_x;                          // commit only X
+			self.position.x = next_x; // commit only X
 		}
 	
 		// ─── VERTICAL TEST ──────────────────────────────────────────────────────────
@@ -105,7 +100,9 @@ impl Entity
 			}
 		}
 		if collided_y {
-			self.speed.y = -self.speed.y;                      // reverse only Y
+			// Signum returns 1.0 for positive numbers and -1.0 for negative numbers
+			// Used to reverse directions easily
+			self.speed.y = -self.speed.y.signum() * rng.random_range(MIN_SPEED..MAX_SPEED) as f32;
 		} else {
 			self.position.y = next_y;                          // commit only Y
 		}
