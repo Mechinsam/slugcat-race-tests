@@ -1,4 +1,5 @@
 use raylib::prelude::*;
+use std::ops::{Deref, DerefMut};
 use rand::Rng;
 
 use crate::texture_to_collision_mask;
@@ -6,6 +7,7 @@ use crate::texture_to_collision_mask;
 const MIN_SPEED: i32 = 200;
 const MAX_SPEED: i32 = 300;
 
+// "Super-class"
 pub struct Entity
 {
 	pub position: Vector2,
@@ -17,6 +19,44 @@ pub struct Entity
 	height: i32,
 	mask: Vec<bool>,
 	pub scale: f32
+}
+
+// Slugcat "Sub-class"
+pub struct Slugcat
+{
+	pub entity: Entity
+}
+
+impl Deref for Slugcat {
+	type Target = Entity;
+	fn deref(&self) -> &Entity {
+		&self.entity
+	}
+}
+
+impl DerefMut for Slugcat {
+	fn deref_mut(&mut self) -> &mut Entity {
+		&mut self.entity
+	}
+}
+
+// Food "Sub-class"
+pub struct Food
+{
+	pub entity: Entity
+}
+
+impl Deref for Food {
+	type Target = Entity;
+	fn deref(&self) -> &Entity {
+		&self.entity
+	}
+}
+
+impl DerefMut for Food {
+	fn deref_mut(&mut self) -> &mut Entity {
+		&mut self.entity
+	}
 }
 
 impl Entity
@@ -38,6 +78,21 @@ impl Entity
 			mask,
 			scale
 		}
+	}
+
+	pub fn draw(&self, drawer: &mut RaylibDrawHandle)
+	{
+		drawer.draw_texture_ex(&self.texture, self.position, 0f32, self.scale,Color::WHITE);
+	}
+}
+
+impl Slugcat
+{
+	pub fn new(texture: Texture2D, scale: f32) -> Self
+	{
+		let entity = Entity::new(texture, scale);
+
+		Slugcat {entity}
 	}
 
 	// I wouldn't try to touch this if i were you..... i have no clue HOW this works.... but it works
@@ -114,10 +169,5 @@ impl Entity
 		if self.position.y < 0.0 || self.position.y + self.height as f32 > screen_height as f32 {
 			self.speed.y = -self.speed.y;
 		}
-	}
-
-	pub fn draw(&self, drawer: &mut RaylibDrawHandle)
-	{
-		drawer.draw_texture_ex(&self.texture, self.position, 0f32, self.scale,Color::WHITE);
 	}
 }

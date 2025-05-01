@@ -32,6 +32,11 @@ impl Viewport
 		}
 	}
 
+	pub fn change_title(&mut self, new_title: &str)
+	{
+		self.window.set_window_title(&self.thread, new_title);
+	}
+
 	pub fn load_image(&mut self, filename: &str) -> Texture2D
 	{
 		let image: Texture2D = self.window.load_texture(&self.thread, filename).expect("Failed to load texture");

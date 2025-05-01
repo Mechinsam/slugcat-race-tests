@@ -11,13 +11,13 @@ const SCREEN_HEIGHT: i32 = 768;
 const MAXFPS: u32 = 75;
 const DRAWFPS: bool = true;
 
-fn load_racers(viewport: &mut Viewport) -> Vec<entity::Entity>
+fn load_racers(viewport: &mut Viewport) -> Vec<entity::Slugcat>
 {
 	let dir: &str = "DATA/racers/sprites";
 	let entries: fs::ReadDir = fs::read_dir(dir).expect(&format!("Failed to read {}", dir));
 
 	// get slugcats from directory
-	let racer_textures: Vec<String> = entries
+	let slugcat_textures: Vec<String> = entries
         .filter_map(Result::ok)
         .filter_map(|entry| {
             let path = entry.path();
@@ -31,24 +31,24 @@ fn load_racers(viewport: &mut Viewport) -> Vec<entity::Entity>
         })
         .collect();
 
-	let mut slugcats: Vec<entity::Entity> = Vec::new();
+	let mut slugcats: Vec<entity::Slugcat> = Vec::new();
 
 	let mut counter: i32 = 1;
-	let racers_spacing: i32 = 10; // Distance between slugcats. Kind of like... padding
+	let slugcats_spacing: i32 = 10; // Distance between slugcats. Kind of like... padding
 
-	for racer_texture_path in racer_textures
+	for racer_texture_path in slugcat_textures
 	{
 		let racer_texture_path: String = format!("DATA/racers/sprites/{}", racer_texture_path);
 
-		let mut entity: entity::Entity = entity::Entity::new(viewport.load_image(&racer_texture_path), 0.25);
-		let width: i32 = entity.texture.width() + racers_spacing;
+		let mut slugcat: entity::Slugcat = entity::Slugcat::new(viewport.load_image(&racer_texture_path), 0.25);
+		let width: i32 = slugcat.texture.width() + slugcats_spacing;
 
 		for i in 0..counter {
-			entity.position.x += width as f32 * entity.scale;
+			slugcat.position.x += width as f32 * slugcat.scale;
 		}
 		
 
-		slugcats.push(entity);
+		slugcats.push(slugcat);
 
 		counter += 1;
 	}
@@ -85,34 +85,39 @@ fn main()
 {
 	//let mut delta_time: f32 = 1f32/(MAXFPS as f32);
 	let mut viewport: rendersystem::Viewport = rendersystem::Viewport::init(
-		"srt64",
+		"SRT",
 		SCREEN_WIDTH,
 		SCREEN_HEIGHT,
 		MAXFPS
 	);
-	load_racers(&mut viewport);
+
+	// Load all assets
 	let map: map::Map = map::Map::new("map1", &mut viewport);
-	let mut slugcats: Vec<entity::Entity> = load_racers(&mut viewport);
+	let mut slugcats: Vec<entity::Slugcat> = load_racers(&mut viewport);
+
+	viewport.change_title(&format!("SRT ({})", map.map_name));
 
 	// Game loop
 	while !viewport.window.window_should_close() {
+		// Setup
 		let delta_time: f32 = viewport.window.get_frame_time();
 		let mut drawer: RaylibDrawHandle<'_> = viewport.window.begin_drawing(&viewport.thread);
-
 		drawer.clear_background(Color::BLACK);
 
+		// Background priority
 		drawer.draw_texture(&map.background, 0, 0, Color::WHITE);
 		
+		// Render Slugcats
 		for racer in &mut slugcats
 		{
 			racer.update(SCREEN_WIDTH, SCREEN_HEIGHT, delta_time, &map.col_map, SCREEN_WIDTH, SCREEN_HEIGHT);
 			racer.draw(&mut drawer);
 		}
 
+		// Render food
 		map.draw_food(&mut drawer);
-		
-		//drawer.draw_texture(&spec, 100, 100, Color::WHITE);
 
+		// Render FPS if needed
 		if DRAWFPS {
 			drawer.draw_fps(0, 0);
 		}
