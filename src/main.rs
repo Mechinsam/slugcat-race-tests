@@ -1,62 +1,20 @@
 use raylib::prelude::*;
-use rendersystem::Viewport;
-use std::{slice, fs};
+use rayon::prelude::*;
+
+use std::slice;
 
 mod entity;
 mod gamestates;
+mod assets;
 mod map;
 mod rendersystem;
 
 use crate::gamestates::GameState; // i dont feel like typing out gamestates::GameState all the time lol
+use rendersystem::Viewport;
 
 const SCREEN_WIDTH: i32 = 1024;
 const SCREEN_HEIGHT: i32 = 768;
 const MAXFPS: u32 = 75;
-
-pub fn load_racers(viewport: &mut Viewport, gate_spawn_pos: Vector2) -> Vec<entity::Slugcat>
-{
-	let dir: &str = "DATA/racers/sprites";
-	let entries: fs::ReadDir = fs::read_dir(dir).expect(&format!("Failed to read {}", dir));
-
-	// get slugcats from directory
-	let slugcat_textures: Vec<String> = entries
-        .filter_map(Result::ok)
-        .filter_map(|entry| {
-            let path = entry.path();
-            // If extension == "png", extract file_name as String; else skip
-            path.extension()
-                .and_then(|ext| ext.to_str())
-                .filter(|&ext| ext.eq_ignore_ascii_case("png"))
-                .and_then(|_| path.file_name()                                           
-                    .and_then(|os| os.to_str())
-                    .map(|s| s.to_owned()))
-        })
-        .collect();
-
-	let mut slugcats: Vec<entity::Slugcat> = Vec::new();
-
-	let mut counter: i32 = 0;
-	let slugcats_spacing: i32 = 10; // Distance between slugcats. Kind of like... padding
-
-	for racer_texture_path in slugcat_textures
-	{
-		let racer_texture_path: String = format!("DATA/racers/sprites/{}", racer_texture_path);
-
-		let mut slugcat: entity::Slugcat = entity::Slugcat::new(viewport.load_image(&racer_texture_path), 0.25, gate_spawn_pos);
-		let width: i32 = slugcat.texture.width() + slugcats_spacing;
-
-		for _ in 0..counter {
-			slugcat.position.x += width as f32 * slugcat.scale;
-		}
-		
-
-		slugcats.push(slugcat);
-
-		counter += 1;
-	}
-	
-	return slugcats;
-}
 
 pub fn texture_to_collision_mask(texture: &Texture2D, scale: f32) -> Vec<bool>
 {
@@ -100,7 +58,7 @@ fn main()
 	// Load all assets
 	// Does not matter what game state you are in
 	let map: map::Map = map::Map::new("Blocks", &mut viewport);
-	let mut slugcats: Vec<entity::Slugcat> = load_racers(&mut viewport, map.gate_spawn_pos);
+	let mut slugcats: Vec<entity::Slugcat> = assets::load_slugcats(&mut viewport, map.gate_spawn_pos);
 
 	let win_image: Texture2D = viewport.load_image("DATA/win.png");
 
@@ -132,13 +90,25 @@ fn main()
 			// Background priority
 			drawer.draw_texture(&map.background, 0, 0, Color::WHITE);
 			
-			// Render Slugcats
-			for racer in &mut slugcats
+			// Update and Slugcats
+			if slugcats_should_move
 			{
-				if slugcats_should_move {
-					racer.update(SCREEN_WIDTH, SCREEN_HEIGHT, delta_time, &map.col_map, SCREEN_WIDTH, SCREEN_HEIGHT);
-				}
-				racer.draw(&mut drawer);
+				// Multi-threaded update
+				slugcats
+					.par_iter_mut()
+					.for_each(|slugcat: &mut entity::Slugcat| slugcat.update(
+						SCREEN_WIDTH,
+						SCREEN_HEIGHT,
+						delta_time,
+						&map.col_map,
+						SCREEN_WIDTH,
+						SCREEN_HEIGHT
+					));
+			}
+
+			// Slugcat render
+			for slugcat in &slugcats {
+				slugcat.draw(&mut drawer);
 			}
 
 			// Render food
@@ -146,7 +116,7 @@ fn main()
 
 			if is_food_collided
 			{
-				game_state = GameState::Win;
+				//game_state = GameState::Win;
 			}
 
 			map.food.draw(&mut drawer);

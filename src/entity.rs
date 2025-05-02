@@ -24,7 +24,8 @@ pub struct Entity
 // Slugcat "Sub-class"
 pub struct Slugcat
 {
-	pub entity: Entity
+	pub entity: Entity,
+	pub name: String
 }
 
 impl Deref for Slugcat {
@@ -88,12 +89,15 @@ impl Entity
 
 impl Slugcat
 {
-	pub fn new(texture: Texture2D, scale: f32, position: Vector2) -> Self
+	pub fn new(name: &str, texture: Texture2D, scale: f32, position: Vector2) -> Self
 	{
 		let mut entity: Entity = Entity::new(texture, scale);
 		entity.position = position;
 
-		Slugcat {entity}
+		Slugcat {
+			entity,
+			name: name.to_string()
+		}
 	}
 
 	// I wouldn't try to touch this if i were you..... i have no clue HOW this works.... but it works

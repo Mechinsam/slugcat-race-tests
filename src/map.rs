@@ -26,6 +26,7 @@ impl Map
 
 		let bg_location: String = format!("DATA/maps/{}/bg.png", map_name);
 		let colmap_location: String = format!("DATA/maps/{}/col_map.png", map_name);
+		let food_texture_location: String = format!("DATA/maps/{}/food.png", map_name);
 		let metadata_location: String = format!("DATA/maps/{}/metadata.json", map_name);
 
 
@@ -73,7 +74,7 @@ impl Map
 		}).unwrap_or_else(|| Vector2::new(0.0, 0.0));
 		
 		// Food
-		let food: Food = Food::new(viewport.load_image("DATA/food.png"), 0.08, food_spawn_pos);
+		let food: Food = Food::new(viewport.load_image(&food_texture_location), 0.08, food_spawn_pos);
 
 		Map {
 			map_name,
