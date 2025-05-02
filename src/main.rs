@@ -85,64 +85,73 @@ fn main()
 		}
 
 		// Events.... I mean.... theres only one
-		if event == GameEvent::RaceWon
+		match &event
 		{
-			println!("HEY WE LOADED THE WIN TEXTURE IT HAS BEEN REPLACED I PROMISE!!!!!!!!!");
-			win_image = viewport.load_image(
-				&format!("DATA/racers/win/{}.png", winner)
-			);
+			GameEvent::RaceWon =>
+			{
+				win_image = viewport.load_image(
+					&format!("DATA/racers/win/{}.png", winner)
+				);
+			}
+			GameEvent::None =>
+			{
+				// do nothing
+			}
 		}
+		// Clear event
+		event = GameEvent::None;
 
 		// Drawer setup
 		let mut drawer: RaylibDrawHandle<'_> = viewport.window.begin_drawing(&viewport.thread);
 		drawer.clear_background(Color::BLACK);
 
-		
-		if game_state == GameState::InRace
-		{
-			// Background priority
-			drawer.draw_texture(&map.background, 0, 0, Color::WHITE);
+		match &game_state {
+			GameState::InRace =>
+			{
+				// Background priority
+				drawer.draw_texture(&map.background, 0, 0, Color::WHITE);
+				
+				// Update and Slugcats
+				if slugcats_should_move
+				{
+					// Multi-threaded update
+					slugcats
+						.par_iter_mut()
+						.for_each(|slugcat: &mut entity::Slugcat| slugcat.update(
+							SCREEN_WIDTH,
+							SCREEN_HEIGHT,
+							delta_time,
+							&map.col_map,
+							SCREEN_WIDTH,
+							SCREEN_HEIGHT
+						));
+				}
 			
-			// Update and Slugcats
-			if slugcats_should_move
+				// Slugcat render
+				for slugcat in &slugcats {
+					slugcat.draw(&mut drawer);
+				}
+			
+				// Render food
+				winner = map.food.update(&slugcats);
+				map.food.draw(&mut drawer);
+			
+				if winner != "/"
+				{
+					println!("{}", winner);
+					game_state = GameState::Win;
+					event = GameEvent::RaceWon;
+				}
+			}
+			GameState::Win =>
 			{
-				// Multi-threaded update
-				slugcats
-					.par_iter_mut()
-					.for_each(|slugcat: &mut entity::Slugcat| slugcat.update(
-						SCREEN_WIDTH,
-						SCREEN_HEIGHT,
-						delta_time,
-						&map.col_map,
-						SCREEN_WIDTH,
-						SCREEN_HEIGHT
-					));
+				drawer.draw_texture(&win_image, 0, 0, Color::WHITE);
+				drawer.draw_text(&winner, 10, SCREEN_HEIGHT-100, 100, Color::BLACK);
 			}
-
-			// Slugcat render
-			for slugcat in &slugcats {
-				slugcat.draw(&mut drawer);
-			}
-
-			// Render food
-			winner = map.food.update(&slugcats);
-			map.food.draw(&mut drawer);
-
-			if winner != "/"
+			other =>
 			{
-				println!("{}", winner);
-				game_state = GameState::Win;
-				event = GameEvent::RaceWon;
+				drawer.draw_text("fin", (SCREEN_WIDTH/2) as i32, (SCREEN_HEIGHT/2) as i32, 24, Color::WHITE);
 			}
-		}
-		else if game_state == GameState::Win
-		{
-			drawer.draw_texture(&win_image, 0, 0, Color::WHITE);
-			drawer.draw_text(&winner, 10, SCREEN_HEIGHT-100, 100, Color::BLACK);
-		}
-		else
-		{
-			drawer.draw_text("fin", (SCREEN_WIDTH/2) as i32, (SCREEN_HEIGHT/2) as i32, 24, Color::WHITE);
 		}
 
 		if show_debug
@@ -156,7 +165,6 @@ fn main()
 			drawer.draw_text(&mouse_pos_text, 0, 20, 20, Color::LIGHTGREEN);
 		}
 
-		// Clear event
-		event = GameEvent::None;
+		
 	}
 }
