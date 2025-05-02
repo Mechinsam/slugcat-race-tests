@@ -1,15 +1,16 @@
+use enums::GameEvent;
 use raylib::prelude::*;
 use rayon::prelude::*;
 
 use std::slice;
 
 mod entity;
-mod gamestates;
+mod enums;
 mod assets;
 mod map;
 mod rendersystem;
 
-use crate::gamestates::GameState; // i dont feel like typing out gamestates::GameState all the time lol
+use crate::enums::GameState; // i dont feel like typing out gamestates::GameState all the time lol
 use rendersystem::Viewport;
 
 const SCREEN_WIDTH: i32 = 1024;
@@ -67,8 +68,13 @@ fn main()
 		viewport.change_title(&format!("SRT ({})", map.map_name));
 	}
 
+	let mut event: GameEvent = GameEvent::None;
 	// Game loop
 	while !viewport.window.window_should_close() {
+		// Setup
+		let delta_time: f32 = viewport.window.get_frame_time();
+		let mouse_pos = &viewport.get_mouse_position();
+
 		// Input
 		// Why Input before Setup? Because 'viewport.window' cant have two mutable references at once ('drawer' needs it as well)
 		if viewport.window.is_key_pressed(KeyboardKey::KEY_Q) {
@@ -78,8 +84,8 @@ fn main()
 			show_debug = !show_debug;
 		}
 
-		
-		if game_state == GameState::Win && winner !="/"
+		// Events.... I mean.... theres only one
+		if event == GameEvent::RaceWon
 		{
 			println!("HEY WE LOADED THE WIN TEXTURE IT HAS BEEN REPLACED I PROMISE!!!!!!!!!");
 			win_image = viewport.load_image(
@@ -87,9 +93,7 @@ fn main()
 			);
 		}
 
-		// Setup
-		let delta_time: f32 = viewport.window.get_frame_time();
-		let mouse_pos = &viewport.get_mouse_position();
+		// Drawer setup
 		let mut drawer: RaylibDrawHandle<'_> = viewport.window.begin_drawing(&viewport.thread);
 		drawer.clear_background(Color::BLACK);
 
@@ -128,6 +132,7 @@ fn main()
 			{
 				println!("{}", winner);
 				game_state = GameState::Win;
+				event = GameEvent::RaceWon;
 			}
 		}
 		else if game_state == GameState::Win
@@ -150,5 +155,8 @@ fn main()
 
 			drawer.draw_text(&mouse_pos_text, 0, 20, 20, Color::LIGHTGREEN);
 		}
+
+		// Clear event
+		event = GameEvent::None;
 	}
 }
