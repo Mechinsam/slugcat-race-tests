@@ -73,7 +73,7 @@ impl Map
 		}).unwrap_or_else(|| Vector2::new(0.0, 0.0));
 		
 		// Food
-		let food: Food = Food::new(viewport.load_image("DATA/food.png"), 0.45, food_spawn_pos);
+		let food: Food = Food::new(viewport.load_image("DATA/food.png"), 0.08, food_spawn_pos);
 
 		Map {
 			map_name,
