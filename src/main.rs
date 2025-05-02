@@ -47,6 +47,7 @@ fn main()
 	let mut game_state = GameState::InRace; // Either "InRace" or "win"
 	let slugcats_should_move: bool = true; // Set to 'true' to ignore countdown (not implemented yet)
 	let mut show_debug: bool = false;
+	let mut winner: String = String::from("/");
 
 	let mut viewport: rendersystem::Viewport = rendersystem::Viewport::init(
 		"SRT (idling)",
@@ -60,7 +61,7 @@ fn main()
 	let map: map::Map = map::Map::new("Blocks", &mut viewport);
 	let mut slugcats: Vec<entity::Slugcat> = assets::load_slugcats(&mut viewport, map.gate_spawn_pos);
 
-	let win_image: Texture2D = viewport.load_image("DATA/win.png");
+	let mut win_image: Texture2D = viewport.load_image("DATA/racers/win/_default.png");
 
 	if game_state == GameState::InRace {
 		viewport.change_title(&format!("SRT ({})", map.map_name));
@@ -77,6 +78,14 @@ fn main()
 			show_debug = !show_debug;
 		}
 
+		
+		if game_state == GameState::Win && winner !="/"
+		{
+			println!("HEY WE LOADED THE WIN TEXTURE IT HAS BEEN REPLACED I PROMISE!!!!!!!!!");
+			win_image = viewport.load_image(
+				&format!("DATA/racers/win/{}.png", winner)
+			);
+		}
 
 		// Setup
 		let delta_time: f32 = viewport.window.get_frame_time();
@@ -112,18 +121,19 @@ fn main()
 			}
 
 			// Render food
-			let is_food_collided = map.food.update(&slugcats);
-
-			if is_food_collided
-			{
-				//game_state = GameState::Win;
-			}
-
+			winner = map.food.update(&slugcats);
 			map.food.draw(&mut drawer);
+
+			if winner != "/"
+			{
+				println!("{}", winner);
+				game_state = GameState::Win;
+			}
 		}
 		else if game_state == GameState::Win
 		{
-			drawer.draw_texture(&win_image, 0, 0, Color::WHITE);	
+			drawer.draw_texture(&win_image, 0, 0, Color::WHITE);
+			drawer.draw_text(&winner, 10, SCREEN_HEIGHT-100, 100, Color::BLACK);
 		}
 		else
 		{

@@ -1,6 +1,6 @@
 // This file contains the info for loading slugcat sprites and win screens
 use raylib::prelude::*;
-use std::{path::Path, fs};
+use std::fs;
 
 use crate::entity;
 use crate::Viewport;
@@ -30,15 +30,15 @@ pub fn load_slugcats(viewport: &mut Viewport, gate_spawn_pos: Vector2) -> Vec<en
 	let mut counter: i32 = 0;
 	let slugcats_spacing: i32 = 10; // Distance between slugcats. Kind of like... padding
 
-	for slugcat_texture_path in slugcat_textures
+	for slugcat_path in slugcat_textures
 	{
-		let slugcat_name: String = slugcat_texture_path
+		let slugcat_name: String = slugcat_path
 			.strip_suffix(".png")
-			.unwrap_or(&slugcat_texture_path)
+			.unwrap_or(&slugcat_path)
 			.to_string();
 		println!("{}", slugcat_name);
 		
-		let slugcat_texture_path: String = format!("DATA/racers/sprites/{}", slugcat_texture_path);
+		let slugcat_texture_path: String = format!("DATA/racers/sprites/{}", slugcat_path);
 
 		let mut slugcat: entity::Slugcat = entity::Slugcat::new(&slugcat_name,
 			viewport.load_image(&slugcat_texture_path),

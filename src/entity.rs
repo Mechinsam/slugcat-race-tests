@@ -25,7 +25,7 @@ pub struct Entity
 pub struct Slugcat
 {
 	pub entity: Entity,
-	pub name: String
+	pub name: String,
 }
 
 impl Deref for Slugcat {
@@ -96,7 +96,7 @@ impl Slugcat
 
 		Slugcat {
 			entity,
-			name: name.to_string()
+			name: name.to_string(),
 		}
 	}
 
@@ -188,8 +188,12 @@ impl Food
 	}
 
 	// Food does not use pixel perfect collisions but still initilises it when calling Food::new. [TODO] remove that somehow
-	pub fn update(&self, slugcats: &Vec<Slugcat>) -> bool
+	pub fn update(&self, slugcats: &Vec<Slugcat>) -> String
 	{
+		// Default value is '/' because the slugcat name is its filename so we dont want the default value to clash with potential filenames
+		// But '/' is an illegal filename on a lot of operating systems hence why it was chosen.
+		let default: String= String::from("/");
+
 		let food_col_box: Rectangle = Rectangle::new(
 			self.position.x,
 			self.position.y,
@@ -210,10 +214,10 @@ impl Food
 			if slugcat_col_box.check_collision_recs(&food_col_box)
 			{
 				println!("yeah im eating this shit");
-				return true;
+				return slugcat.name.clone();
 			}
 		}
 
-		return false;
+		return default;
 	}
 }
