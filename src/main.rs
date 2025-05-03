@@ -17,6 +17,8 @@ const SCREEN_WIDTH: i32 = 1024;
 const SCREEN_HEIGHT: i32 = 768;
 const MAXFPS: u32 = 75;
 
+
+
 pub fn texture_to_collision_mask(texture: &Texture2D, scale: f32) -> Vec<bool>
 {
 	let mut image: Image = texture
@@ -112,6 +114,11 @@ fn main()
 				drawer.draw_texture(&map.background, 0, 0, Color::WHITE);
 				
 				// Update and Slugcats
+				let snapshot: Vec<_> = slugcats
+					.iter()
+					.map(|sc| sc.entity.to_collision_data(&sc.name))
+					.collect();
+
 				if slugcats_should_move
 				{
 					// Multi-threaded update
@@ -123,7 +130,8 @@ fn main()
 							delta_time,
 							&map.col_map,
 							SCREEN_WIDTH,
-							SCREEN_HEIGHT
+							SCREEN_HEIGHT,
+							&snapshot
 						));
 				}
 			
@@ -138,9 +146,8 @@ fn main()
 			
 				if winner != "/"
 				{
-					println!("{}", winner);
-					game_state = GameState::Win;
-					event = GameEvent::RaceWon;
+					//game_state = GameState::Win;
+					//event = GameEvent::RaceWon;
 				}
 			}
 			GameState::Win =>
@@ -148,7 +155,7 @@ fn main()
 				drawer.draw_texture(&win_image, 0, 0, Color::WHITE);
 				drawer.draw_text(&winner, 10, SCREEN_HEIGHT-100, 100, Color::BLACK);
 			}
-			other =>
+			_other =>
 			{
 				drawer.draw_text("fin", (SCREEN_WIDTH/2) as i32, (SCREEN_HEIGHT/2) as i32, 24, Color::WHITE);
 			}
