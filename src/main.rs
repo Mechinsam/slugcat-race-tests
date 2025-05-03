@@ -75,7 +75,8 @@ fn main()
 
 	let mut race_track = audio_sys.new_music(&race_track_path).expect("Failed to load race music!");
 	let mut win_track = audio_sys.new_music(&win_track_path).expect("Failed to load win music!");
-	let mut win_sfx = audio_sys.new_sound("DATA/sfx/win.wav").expect("Failed to load win SFX!");
+	let win_sfx = audio_sys.new_sound("DATA/sfx/win.wav").expect("Failed to load win SFX!");
+	let applause_sfx = audio_sys.new_sound("DATA/sfx/applause.wav").expect("Failed to load applause SFX!");
 
 	race_track.looping = true;
 	win_track.looping = true;
@@ -155,6 +156,7 @@ fn main()
 				if !win_sfx.is_playing() && race_won
 				{
 					win_track.play_stream();
+					applause_sfx.play();
 					game_state = GameState::Win;
 				}
 
