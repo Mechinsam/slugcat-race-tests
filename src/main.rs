@@ -9,9 +9,11 @@ mod enums;
 mod assets;
 mod map;
 mod rendersystem;
+mod timer;
 
 use crate::enums::GameState; // i dont feel like typing out gamestates::GameState all the time lol
 use rendersystem::Viewport;
+use timer::Timer;
 
 const SCREEN_WIDTH: i32 = 1024;
 const SCREEN_HEIGHT: i32 = 768;
@@ -48,10 +50,15 @@ fn main()
 {
 	// Game vars
 	let mut game_state = GameState::InRace; // Either "InRace" or "win"
-	let slugcats_should_move: bool = true; // Set to 'true' to ignore countdown (not implemented yet)
+	let mut slugcats_should_move: bool = false; // Set to 'true' to ignore countdown (not implemented yet)
 	let mut show_debug: bool = false;
 	let mut winner: String = String::from("/");
 
+	// Timers
+	let mut race_timer: Timer = Timer::new();
+	race_timer.set(5f32);
+
+	//
 	let mut viewport: rendersystem::Viewport = rendersystem::Viewport::init(
 		"SRT (idling)",
 		SCREEN_WIDTH,
@@ -77,6 +84,9 @@ fn main()
 		let delta_time: f32 = viewport.window.get_frame_time();
 		let mouse_pos = &viewport.get_mouse_position();
 
+		// Timers
+		race_timer.tick(delta_time);
+
 		// Input
 		// Why Input before Setup? Because 'viewport.window' cant have two mutable references at once ('drawer' needs it as well)
 		if viewport.window.is_key_pressed(KeyboardKey::KEY_Q) {
@@ -94,6 +104,10 @@ fn main()
 				win_image = viewport.load_image(
 					&format!("DATA/racers/win/{}.png", winner)
 				);
+			}
+			GameEvent::UnleashSlugcats =>
+			{
+				slugcats_should_move = true;
 			}
 			GameEvent::None =>
 			{
@@ -148,6 +162,23 @@ fn main()
 				{
 					//game_state = GameState::Win;
 					//event = GameEvent::RaceWon;
+				}
+
+				// Draw timer
+				if race_timer.seconds_remaining() > 0f32
+				{
+					drawer.draw_text(&format!("PLACE YOUR BETS! {:.2}", race_timer.seconds_remaining()),
+						100,
+						(SCREEN_HEIGHT/2) as i32,
+						48,
+						Color::WHITE
+					);
+				}
+				else
+				{
+					if !slugcats_should_move {
+						event = GameEvent::UnleashSlugcats;
+					}	
 				}
 			}
 			GameState::Win =>

@@ -1,3 +1,8 @@
+// Dude i aint gonna lie raylib is cool and all but im
+// probably going to use godot for everything from now
+// on coz HOLY SHIT this was a lot more work than i thought
+
+
 use raylib::prelude::*;
 use std::ops::{Deref, DerefMut};
 use rand::Rng;

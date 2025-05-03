@@ -11,5 +11,6 @@ pub enum GameState
 pub enum GameEvent
 {
 	None,
-	RaceWon
+	RaceWon,
+	UnleashSlugcats
 }
