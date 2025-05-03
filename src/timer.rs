@@ -1,19 +1,29 @@
 // Self-explanitory by filename
 
 pub struct Timer {
-	remaining: f32 // seconds remaining
+	remaining: f32, // seconds remaining
+	max: f32 // Keeps track of the original time the timer was set for
 }
 
 impl Timer
 {
 	pub fn new() -> Self
 	{
-		Timer {remaining: 0f32}
+		Timer {
+			remaining: 0f32,
+			max: 0f32
+		}
 	}
 	
 	pub fn set(&mut self, seconds: f32)
 	{
 		self.remaining = seconds;
+		self.max = seconds;
+	}
+
+	pub fn get_max(&self) -> f32
+	{
+		return self.max;
 	}
 
 	// should be called every frame
