@@ -54,6 +54,7 @@ fn main()
 	let mut slugcats_should_move: bool = false; // Set to 'true' to ignore countdown (not implemented yet)
 	let mut show_debug: bool = false;
 	let mut winner: String = String::from("/");
+	let mut race_won: bool = false;
 
 	// Timers
 	let mut race_timer: Timer = Timer::new();
@@ -68,12 +69,13 @@ fn main()
 		MAXFPS
 	);
 
-	// Music
+	// Music & Sound
 	let race_track_path = assets::get_music_name(GameState::InRace);
 	let win_track_path: String = assets::get_music_name(GameState::Win);
 
 	let mut race_track = audio_sys.new_music(&race_track_path).expect("Failed to load race music!");
 	let mut win_track = audio_sys.new_music(&win_track_path).expect("Failed to load win music!");
+	let mut win_sfx = audio_sys.new_sound("DATA/sfx/win.wav").expect("Failed to load win SFX!");
 
 	race_track.looping = true;
 	win_track.looping = true;
@@ -117,6 +119,8 @@ fn main()
 		{
 			GameEvent::RaceWon =>
 			{
+				slugcats_should_move = false;
+
 				race_track.stop_stream();
 				
 				// Check if slugcat-specific win image exists. if not, use the default one
@@ -126,7 +130,7 @@ fn main()
 					viewport.load_image("DATA/racers/win/_default.png")
 				};
 
-				win_track.play_stream();
+				win_sfx.play();
 			}
 			GameEvent::UnleashSlugcats =>
 			{
@@ -148,6 +152,12 @@ fn main()
 		match &game_state {
 			GameState::InRace =>
 			{
+				if !win_sfx.is_playing() && race_won
+				{
+					win_track.play_stream();
+					game_state = GameState::Win;
+				}
+
 				// Render background first
 				drawer.draw_texture(&map.background, 0, 0, Color::WHITE);
 				
@@ -178,15 +188,19 @@ fn main()
 					slugcat.draw(&mut drawer);
 				}
 			
-				// Render food
-				winner = map.food.update(&slugcats);
-				map.food.draw(&mut drawer);
-			
-				if winner != "/"
+				// Update & render food
+				if !race_won
 				{
-					game_state = GameState::Win;
-					event = GameEvent::RaceWon;
+					let check_winner = map.food.update(&slugcats);
+					if check_winner != "/"
+					{
+						winner = check_winner;
+						event = GameEvent::RaceWon;
+						race_won = true;
+					}
 				}
+				
+				map.food.draw(&mut drawer);
 
 				// Draw timer
 				if race_timer.seconds_remaining() > 0f32
@@ -200,7 +214,7 @@ fn main()
 				}
 				else
 				{
-					if !slugcats_should_move {
+					if !slugcats_should_move && !race_won {
 						event = GameEvent::UnleashSlugcats;
 					}	
 				}
