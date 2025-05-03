@@ -20,7 +20,6 @@ const SCREEN_HEIGHT: i32 = 768;
 const MAXFPS: u32 = 75;
 
 
-
 pub fn texture_to_collision_mask(texture: &Texture2D, scale: f32) -> Vec<bool>
 {
 	let mut image: Image = texture
@@ -59,7 +58,7 @@ fn main()
 	// Timers
 	let mut race_timer: Timer = Timer::new();
 
-	race_timer.set(5f32);
+	race_timer.set(3f32);
 
 	
 	let mut viewport: rendersystem::Viewport = rendersystem::Viewport::init(
@@ -75,8 +74,10 @@ fn main()
 
 	let mut race_track = audio_sys.new_music(&race_track_path).expect("Failed to load race music!");
 	let mut win_track = audio_sys.new_music(&win_track_path).expect("Failed to load win music!");
+
 	let win_sfx = audio_sys.new_sound("DATA/sfx/win.wav").expect("Failed to load win SFX!");
 	let applause_sfx = audio_sys.new_sound("DATA/sfx/applause.wav").expect("Failed to load applause SFX!");
+	let countdown_sfx = audio_sys.new_sound("DATA/sfx/countdown.wav").expect("Failed to load countdown SFX!");
 
 	race_track.looping = true;
 	win_track.looping = true;
@@ -93,7 +94,10 @@ fn main()
 		viewport.change_title(&format!("SRT ({})", map.map_name));
 	}
 
+	countdown_sfx.play();
+
 	let mut event: GameEvent = GameEvent::None;
+
 	// Game loop
 	while !viewport.window.window_should_close() {
 		// Setup
