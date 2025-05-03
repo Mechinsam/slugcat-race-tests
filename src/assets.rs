@@ -1,8 +1,9 @@
+use rand::seq::IndexedRandom;
 // This file contains the info for loading slugcat sprites and win screens
 use raylib::prelude::*;
-use std::fs;
-
+use std::{fs, path, io::Read};
 use crate::entity;
+use crate::enums::GameState;
 use crate::Viewport;
 
 pub fn load_slugcats(viewport: &mut Viewport, gate_spawn_pos: Vector2) -> Vec<entity::Slugcat>
@@ -57,4 +58,52 @@ pub fn load_slugcats(viewport: &mut Viewport, gate_spawn_pos: Vector2) -> Vec<en
 	}
 	
 	return slugcats;
+}
+
+pub fn get_music_name(state: GameState) -> String
+{
+	let mut rng = rand::rng();
+	let mut dir: &str = "DATA/music/race"; // default is to pick from a race track
+
+	if state == GameState::Win {
+		dir = "DATA/music/win";
+	}
+
+	let entries: fs::ReadDir = fs::read_dir(dir).expect(&format!("Failed to read {}", dir));
+
+	// ignore everything that isnt a png
+	let race_track_names: Vec<String> = entries
+		.filter_map(Result::ok)
+		.filter_map(|entry| {
+			let path = entry.path();
+			// If extension == "png", extract file_name as String; else skip
+			path.extension()
+				.and_then(|ext: &std::ffi::OsStr| ext.to_str())
+				.filter(|&ext| ext.eq_ignore_ascii_case("mp3"))
+				.and_then(|_| path.file_name()                                           
+					.and_then(|os: &std::ffi::OsStr| os.to_str())
+					.map(|s: &str| s.to_owned()))
+		})
+		.collect();
+	
+	let track_name: String = race_track_names.choose(&mut rng).unwrap().to_string();
+	let track_path: String = format!("{dir}/{}", track_name);
+	
+	return  track_path;
+}
+
+pub fn get_map_name_from_file() -> String
+{
+	let mut file = fs::File::open("map.txt").expect("Could not open map.txt!");
+	let mut map_name: String = String::new();
+
+	file.read_to_string(&mut map_name).expect("Couldn't read 'map.txt'!");
+
+	let map_path = format!("DATA/maps/{}", map_name);
+
+	if !path::Path::new(&map_path).exists() {
+		panic!("'{}': map does not exist!", map_name);
+	}
+
+	return map_name;
 }

@@ -48,6 +48,7 @@ pub fn texture_to_collision_mask(texture: &Texture2D, scale: f32) -> Vec<bool>
 
 fn main()
 {
+	let audio_sys = RaylibAudio::init_audio_device().expect("Failed to init audio");
 	// Game vars
 	let mut game_state = GameState::InRace; // Either "InRace" or "win"
 	let mut slugcats_should_move: bool = false; // Set to 'true' to ignore countdown (not implemented yet)
@@ -56,9 +57,10 @@ fn main()
 
 	// Timers
 	let mut race_timer: Timer = Timer::new();
+
 	race_timer.set(5f32);
 
-	//
+	
 	let mut viewport: rendersystem::Viewport = rendersystem::Viewport::init(
 		"SRT (idling)",
 		SCREEN_WIDTH,
@@ -66,9 +68,20 @@ fn main()
 		MAXFPS
 	);
 
-	// Load all assets
-	// Does not matter what game state you are in
-	let map: map::Map = map::Map::new("Blocks", &mut viewport);
+	// Music
+	let race_track_path = assets::get_music_name(GameState::InRace);
+	let win_track_path: String = assets::get_music_name(GameState::Win);
+
+	let mut race_track = audio_sys.new_music(&race_track_path).expect("Failed to load race music!");
+	let mut win_track = audio_sys.new_music(&win_track_path).expect("Failed to load win music!");
+
+	race_track.looping = true;
+	win_track.looping = true;
+
+	// Load other assets
+	// Does not matter what game state you are in, they will be loaded
+	let map_name: String = assets::get_map_name_from_file();
+	let map: map::Map = map::Map::new(&map_name, &mut viewport);
 	let mut slugcats: Vec<entity::Slugcat> = assets::load_slugcats(&mut viewport, map.gate_spawn_pos);
 
 	let mut win_image: Texture2D = viewport.load_image("DATA/racers/win/_default.png");
@@ -84,8 +97,11 @@ fn main()
 		let delta_time: f32 = viewport.window.get_frame_time();
 		let mouse_pos = &viewport.get_mouse_position();
 
-		// Timers
+		// Timers & Music tick
 		race_timer.tick(delta_time);
+
+		race_track.update_stream();
+		win_track.update_stream();
 
 		// Input
 		// Why Input before Setup? Because 'viewport.window' cant have two mutable references at once ('drawer' needs it as well)
@@ -101,13 +117,21 @@ fn main()
 		{
 			GameEvent::RaceWon =>
 			{
-				win_image = viewport.load_image(
-					&format!("DATA/racers/win/{}.png", winner)
-				);
+				race_track.stop_stream();
+				
+				// Check if slugcat-specific win image exists. if not, use the default one
+				win_image = if std::path::Path::new(&format!("DATA/racers/win/{}.png", winner)).exists() {
+					viewport.load_image(&format!("DATA/racers/win/{}.png", winner))
+				} else {
+					viewport.load_image("DATA/racers/win/_default.png")
+				};
+
+				win_track.play_stream();
 			}
 			GameEvent::UnleashSlugcats =>
 			{
 				slugcats_should_move = true;
+				race_track.play_stream();
 			}
 			GameEvent::None =>
 			{
@@ -124,7 +148,7 @@ fn main()
 		match &game_state {
 			GameState::InRace =>
 			{
-				// Background priority
+				// Render background first
 				drawer.draw_texture(&map.background, 0, 0, Color::WHITE);
 				
 				// Update and Slugcats
@@ -160,8 +184,8 @@ fn main()
 			
 				if winner != "/"
 				{
-					//game_state = GameState::Win;
-					//event = GameEvent::RaceWon;
+					game_state = GameState::Win;
+					event = GameEvent::RaceWon;
 				}
 
 				// Draw timer
