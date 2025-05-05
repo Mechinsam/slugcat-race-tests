@@ -150,7 +150,6 @@ impl Slugcat
 		other_slugcats: &[CollisionData]
 	) -> bool
 	{
-		let mut collided: bool = false;
 
 		for y in 0..self.height
 		{
