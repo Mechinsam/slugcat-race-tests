@@ -118,6 +118,10 @@ fn main()
 		if viewport.window.is_key_pressed(KeyboardKey::KEY_D) {
 			show_debug = !show_debug;
 		}
+		if viewport.window.is_key_pressed(KeyboardKey::KEY_R) {
+			event = GameEvent::RaceWon;
+			race_won = true;
+		}
 
 		// Events.... I mean.... theres only one
 		match &event
@@ -247,6 +251,7 @@ fn main()
 			drawer.draw_text(&mouse_pos_text, 0, 20, 20, Color::LIGHTGREEN);
 		}
 
-		
+		// Watermark
+		drawer.draw_text("mechinsam.com", SCREEN_WIDTH-210, SCREEN_HEIGHT-30, 30, Color::BLACK);
 	}
 }
