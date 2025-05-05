@@ -7,6 +7,7 @@ use raylib::prelude::*;
 use std::ops::{Deref, DerefMut};
 use rand::Rng;
 
+use crate::enums::AxisDirection;
 use crate::texture_to_collision_mask;
 use crate::utils::iVector2;
 
@@ -139,6 +140,88 @@ impl Slugcat
 		}
 	}
 
+	fn check_collision (
+		&self,
+		direction: AxisDirection,
+		dest: &Vector2,
+		mask_width: i32,
+		mask_height: i32,
+		map_mask: &[bool],
+		other_slugcats: &[CollisionData]
+	) -> bool
+	{
+		let mut collided: bool = false;
+
+		for y in 0..self.height
+		{
+			for x in 0..self.width
+			{
+
+				// usize used here to determine size of integer (64 on 64bit machines; 32 bit on 32bit machines)
+				let index_x: usize = (y * self.width + x) as usize;
+
+				// if current index is non collidable, skip this iteration
+				if !self.mask[index_x] {continue;}
+
+				// Compute next position depending on which axis we're checking
+				let calculated_position: Vector2 = match direction {
+					AxisDirection::X => Vector2::new(
+						dest.x + x as f32, self.position.y + y as f32,
+					),
+					AxisDirection::Y => Vector2::new(
+						self.position.x + x as f32,
+						dest.y + y as f32
+					)
+				};
+
+				/* Map collision detection */
+				if calculated_position.x >= 0f32
+					&& calculated_position.y >= 0f32
+					&& calculated_position.x < mask_width as f32 // If next possible x position is inside the map
+					&& calculated_position.y < mask_height as f32 // And if next possible y position is inside the map
+					&& map_mask[(calculated_position.y.floor() as i32 * mask_width + calculated_position.x.floor() as i32) as usize] // AND the position is collidable in the mask
+				{
+					// THEN we have collided with the map so return true
+					return true;
+				}
+
+				/* Entity on entity hate crime!!! (entity on entity collision) */
+				for other_slugcat in other_slugcats.iter()
+				{
+					// Skip collision detection if the current slugcat is ourselves
+					if other_slugcat.name == self.name {continue;}
+
+					// Distance between slugcats
+					let slug_distance: iVector2 = iVector2::new(
+						((calculated_position.x - other_slugcat.position.x).floor() as i32),
+						((calculated_position.y - other_slugcat.position.y).floor() as i32)
+					);
+
+					// Collision detection
+					if slug_distance.x < 0 // If left horizontal distance is less than 0
+						|| slug_distance.y < 0 // And if upper vertical distance is less than 0
+						|| slug_distance.x >= other_slugcat.width // And if right horizontal distance is less than 0
+						|| slug_distance.y >= other_slugcat.height // And if lower veritcal distance is less than 0
+					{
+						// No collision happened. Skip this iteration
+						continue;
+					}
+
+					let other_slug_index: usize = (slug_distance.y * other_slugcat.width + slug_distance.x) as usize;
+					
+					// Check if we're overlapping into the other slugcat's mask
+					if other_slugcat.mask[other_slug_index]
+					{
+						// Return true if we have collided
+						return true;
+					}
+				}
+			}
+		}
+
+		return false;
+	}
+
 	// this is a fucking mess btw
 	// assumes mask width & height are the same as the screen size
 	pub fn update (
@@ -165,163 +248,26 @@ impl Slugcat
 
 		// horizontal collisions check
 		// this is biiig and faat btw....
-		let mut collided_x: bool = false;
-		'horizontal_col_check: for y in 0..self.height
-		{
-			for x in 0..self.width
-			{
-				// usize used here to determine size of integer (64 on 64bit machines; 32 bit on 32bit machines)
-				let index_x: usize = (y * self.width + x) as usize;
+		let mut collided_x: bool = self.check_collision(AxisDirection::X, &dest, mask_width, mask_height, map_mask, other_slugcats);
+		let mut collided_y: bool = self.check_collision(AxisDirection::Y, &dest, mask_width, mask_height, map_mask, other_slugcats);
 
-				// if current index is non collidable, skip this iteration
-				if !self.mask[index_x] {continue;}
-
-				let calculated_position: Vector2 = Vector2::new(
-					dest.x + x as f32,
-					self.position.y + y as f32
-				);
-
-
-				/* Map collision detection */
-				if calculated_position.x >= 0f32
-					&& calculated_position.y >= 0f32
-					&& calculated_position.x < mask_width as f32 // If next possible x position is inside the map
-					&& calculated_position.y < mask_height as f32 // And if next possible y position is inside the map
-					&& map_mask[(calculated_position.y.floor() as i32 * mask_width + calculated_position.x.floor() as i32) as usize] // AND the position is collidable in the mask
-				{
-					// THEN we have collided with the map
-					collided_x = true;
-					break 'horizontal_col_check;
-				}
-
-				/* Entity on entity hate crime!!! (entity on entity collision) */
-				for other_slugcat in other_slugcats.iter()
-				{
-					// Skip collision detection if the current slugcat is ourselves
-					if other_slugcat.name == self.name {continue;}
-
-					// Distance between slugcats
-					let slug_distance: iVector2 = iVector2::new(
-						((calculated_position.x - other_slugcat.position.x).floor() as i32),
-						((calculated_position.y - other_slugcat.position.y).floor() as i32)
-					);
-
-					// Collision detection
-					if slug_distance.x < 0 // If left horizontal distance is less than 0
-						|| slug_distance.y < 0 // And if upper vertical distance is less than 0
-						|| slug_distance.x >= other_slugcat.width // And if right horizontal distance is less than 0
-						|| slug_distance.y >= other_slugcat.height // And if lower veritcal distance is less than 0
-					{
-						// No collision happened. Skip this iteration
-						continue;
-					}
-
-					let other_slug_index: usize = (slug_distance.y * other_slugcat.width + slug_distance.x) as usize;
-					
-					// Check if we're overlapping into the other slugcat's mask
-					if other_slugcat.mask[other_slug_index]
-					{
-						collided_x = true;
-						break 'horizontal_col_check;
-					}
-				}
-			}
-		}
-
-		// If we are collided horizontally, reverse and apply a random x speed
 		if collided_x
 		{
-			// Signum returns 1 if value is positive and -1 if not
+			// If collided horizontally, reverse and apply a random speed on the horizontal axis
 			self.speed.x = -self.speed.x.signum() * rng.random_range(MIN_SPEED..MAX_SPEED) as f32;
-		} else
-		{
-			// No collision. Just set the x position as the next potential value
+		} else {
+			// Otherwise set the next x position to the next possible one
 			self.position.x = dest.x;
 		}
 
-		///////////////////////
-		
-
-		// vertical collision check
-		// also very biig and faat
-		// theres probably a better way to do this wihtout copy pasting code but idk how
-		let mut collided_y: bool = false;
-		'veritcal_col_check: for y in 0..self.height
-		{
-			for x in 0..self.width
-			{
-				// usize used here to determine size of integer (64 on 64bit machines; 32 bit on 32bit machines)
-				let index_x: usize = (y * self.width + x) as usize;
-
-				// if current index is non collidable, skip this iteration
-				if !self.mask[index_x] {continue;}
-
-				let calculated_position: Vector2 = Vector2::new(
-					self.position.x,
-					dest.y + y as f32
-				);
-
-
-				/* Map collision detection */
-				if calculated_position.x >= 0f32
-					&& calculated_position.y >= 0f32
-					&& calculated_position.x < mask_width as f32 // If next possible x position is inside the map
-					&& calculated_position.y < mask_height as f32 // And if next possible y position is inside the map
-					&& map_mask[(calculated_position.y.floor() as i32 * mask_width + calculated_position.x.floor() as i32) as usize] // AND the position is collidable in the mask
-				{
-					// THEN we have collided with the map
-					collided_y = true;
-					break 'veritcal_col_check;
-				}
-
-				/* Entity on entity hate crime!!! (entity on entity collision) */
-				for other_slugcat in other_slugcats.iter()
-				{
-					// Skip collision detection if the current slugcat is ourselves
-					if other_slugcat.name == self.name {continue;}
-
-					// Distance between slugcats
-					// Distance between slugcats
-					let slug_distance: iVector2 = iVector2::new(
-						((calculated_position.x - other_slugcat.position.x).floor() as i32),
-						((calculated_position.y - other_slugcat.position.y).floor() as i32)
-					);
-
-					// Collision detection
-					if slug_distance.x < 0 // If left horizontal distance is less than 0
-						|| slug_distance.y < 0 // And if upper vertical distance is less than 0
-						|| slug_distance.x >= other_slugcat.width // And if right horizontal distance is less than 0
-						|| slug_distance.y >= other_slugcat.height // And if lower veritcal distance is less than 0
-					{
-						// No collision happened. Skip this iteration
-						continue;
-					}
-
-					let other_slug_index: usize = (slug_distance.y * other_slugcat.width + slug_distance.x) as usize;
-					
-					// Check if we're overlapping into the other slugcat's mask
-					if other_slugcat.mask[other_slug_index]
-					{
-						collided_y = true;
-						break 'veritcal_col_check;
-					}
-				}
-			}
-		}
-
-		// If we are collided vertically, reverse and apply a random y speed
 		if collided_y
 		{
-			// Signum returns 1 if value is positive and -1 if not
+			// If collided vertically, reverse and apply a random speed on the vertical axis
 			self.speed.y = -self.speed.y.signum() * rng.random_range(MIN_SPEED..MAX_SPEED) as f32;
-		} else
-		{
-			// No collision. Just set the x position as the next potential value
+		} else {
+			// Otherwise set the next y position to the next possible one
 			self.position.y = dest.y;
 		}
-
-		////////
-		// Whew! Sorry about the repeating code im a bad programmer
 
 		// Screen boundries
 		if self.position.x < 0f32 || self.position.x + self.width as f32 > screen_width as f32
