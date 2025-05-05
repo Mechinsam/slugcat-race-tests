@@ -27,8 +27,8 @@ Both 64 bit.
 Instructions are on there as well.
 
 # Compiling
-1. Download Rust
-2. Clone the repo with the terminal command `git clone https://www.github.com/Mechinsam/slugcat-race-tests.git` or use Github Desktop (GUI)
+1. Download [Rust](https://www.rust-lang.org/tools/install)
+2. Clone the repo with the terminal command `git clone https://www.github.com/Mechinsam/slugcat-race-tests.git` or use [Github Desktop](https://desktop.github.com/download/) (GUI)
 3. Go into the cloned folder and open your terminal
 4. Run the command `cargo run`
 
