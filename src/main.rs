@@ -8,6 +8,7 @@ mod entity;
 mod enums;
 mod assets;
 mod map;
+mod utils;
 mod rendersystem;
 mod timer;
 
@@ -187,8 +188,6 @@ fn main()
 							SCREEN_HEIGHT,
 							delta_time,
 							&map.col_map,
-							SCREEN_WIDTH,
-							SCREEN_HEIGHT,
 							&snapshot
 						));
 				}

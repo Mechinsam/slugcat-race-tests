@@ -14,3 +14,11 @@ pub enum GameEvent
 	RaceWon,
 	UnleashSlugcats
 }
+
+// Used for collision detection
+#[derive(PartialEq)]
+pub enum AxisDirection
+{
+	X,
+	Y
+}
