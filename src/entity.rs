@@ -244,11 +244,8 @@ impl Slugcat
 		let mask_width: i32 = screen_width;
 		let mask_height: i32 = screen_height;
 
-
-		// horizontal collisions check
-		// this is biiig and faat btw....
+		// Check and apply X first BEFORE Y
 		let collided_x: bool = self.check_collision(AxisDirection::X, &dest, mask_width, mask_height, map_mask, other_slugcats);
-		let collided_y: bool = self.check_collision(AxisDirection::Y, &dest, mask_width, mask_height, map_mask, other_slugcats);
 
 		if collided_x
 		{
@@ -258,6 +255,10 @@ impl Slugcat
 			// Otherwise set the next x position to the next possible one
 			self.position.x = dest.x;
 		}
+
+
+		// Check and apply Y second AFTER Y
+		let collided_y: bool = self.check_collision(AxisDirection::Y, &dest, mask_width, mask_height, map_mask, other_slugcats);
 
 		if collided_y
 		{

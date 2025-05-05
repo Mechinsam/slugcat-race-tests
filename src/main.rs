@@ -29,19 +29,19 @@ pub fn texture_to_collision_mask(texture: &Texture2D, scale: f32) -> Vec<bool>
 	image.resize((texture.width() as f32 * scale) as i32, (texture.height() as f32 * scale) as i32);
 	
 	// calculate total pixel count
-	let total_px = (image.width * image.height) as usize;
+	let pixel_count: usize = (image.width * image.height) as usize;
 	
-	// interpret `data` pointer as color
+	// get colors
 	let colors: &[raylib::ffi::Color] = unsafe {
 		slice::from_raw_parts(
 			image.data as *const raylib::ffi::Color,
-			total_px,
+			pixel_count,
 		)
 	};
 	
-	// make a simple bitmask (opaque pixels (alpha < 25%) = collision)
+	// bitmask creation (opaque pixels (alpha < 25%) = collision)
 	colors.iter()
-		  .map(|c| c.a > 64) // 64/255 is like almost 25%
+		  .map(|color| color.a > 64) // 64/255 is like almost 25%
 		  .collect()
 }
 
@@ -89,6 +89,9 @@ fn main()
 	let mut slugcats: Vec<entity::Slugcat> = utils::load_slugcats(&mut viewport, map.gate_spawn_pos);
 
 	let mut win_image: Texture2D = viewport.load_image("DATA/racers/win/_default.png");
+	let icon : Texture2D = viewport.load_image("DATA/icon.png");
+
+	viewport.window.set_window_icon(icon.load_image().expect("Failed to load image"));
 
 	if game_state == GameState::InRace {
 		viewport.change_title(&format!("SRT ({})", map.map_name));
