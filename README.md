@@ -2,6 +2,7 @@
 "this peaks"
 > -Vulkan
 ---
+# About
 Slugcat Race Tests (SRT) is inspired from [Horse Race Tests](https://x.com/snakesandrews/status/1915799331220684835) where Rain World slugcats race to collect food.
 
 Built in Rust+Raylib, SRT is an open-source program that allows you to:
@@ -20,11 +21,10 @@ The goal for each race is to get the food. First one to get it wins!
 - Easy way to add more slugcat racers
 - Slugcat
 
-# Usage
-
-# Download
+# Download and Usage
 Windows and Linux versions avaliable on [itch.io](https://mechinsam.itch.io/slugcat-race-tests)
 Both 64 bit.
+Instructions are on there as well.
 
 # Compiling
 1. Download Rust
