@@ -192,8 +192,8 @@ impl Slugcat
 
 					// Distance between slugcats
 					let slug_distance: iVector2 = iVector2::new(
-						((calculated_position.x - other_slugcat.position.x).floor() as i32),
-						((calculated_position.y - other_slugcat.position.y).floor() as i32)
+						(calculated_position.x - other_slugcat.position.x).floor() as i32,
+						(calculated_position.y - other_slugcat.position.y).floor() as i32
 					);
 
 					// Collision detection
@@ -247,8 +247,8 @@ impl Slugcat
 
 		// horizontal collisions check
 		// this is biiig and faat btw....
-		let mut collided_x: bool = self.check_collision(AxisDirection::X, &dest, mask_width, mask_height, map_mask, other_slugcats);
-		let mut collided_y: bool = self.check_collision(AxisDirection::Y, &dest, mask_width, mask_height, map_mask, other_slugcats);
+		let collided_x: bool = self.check_collision(AxisDirection::X, &dest, mask_width, mask_height, map_mask, other_slugcats);
+		let collided_y: bool = self.check_collision(AxisDirection::Y, &dest, mask_width, mask_height, map_mask, other_slugcats);
 
 		if collided_x
 		{
