@@ -7,7 +7,9 @@ use raylib::prelude::*;
 use std::ops::{Deref, DerefMut};
 use rand::Rng;
 
+use crate::enums::AxisDirection;
 use crate::texture_to_collision_mask;
+use crate::utils::iVector2;
 
 const MIN_SPEED: i32 = 050;
 const MAX_SPEED: i32 = 150;
@@ -138,113 +140,142 @@ impl Slugcat
 		}
 	}
 
-	// I wouldn't try to touch this if i were you..... i have no clue HOW this works.... but it works
-	pub fn update(
+	fn check_collision (
+		&self,
+		direction: AxisDirection,
+		dest: &Vector2,
+		mask_width: i32,
+		mask_height: i32,
+		map_mask: &[bool],
+		other_slugcats: &[CollisionData]
+	) -> bool
+	{
+
+		for y in 0..self.height
+		{
+			for x in 0..self.width
+			{
+
+				// usize used here to determine size of integer (64 on 64bit machines; 32 bit on 32bit machines)
+				let index_x: usize = (y * self.width + x) as usize;
+
+				// if current index is non collidable, skip this iteration
+				if !self.mask[index_x] {continue;}
+
+				// Compute next position depending on which axis we're checking
+				let calculated_position: Vector2 = match direction {
+					AxisDirection::X => Vector2::new(
+						dest.x + x as f32, self.position.y + y as f32,
+					),
+					AxisDirection::Y => Vector2::new(
+						self.position.x + x as f32,
+						dest.y + y as f32
+					)
+				};
+
+				/* Map collision detection */
+				if calculated_position.x >= 0f32
+					&& calculated_position.y >= 0f32
+					&& calculated_position.x < mask_width as f32 // If next possible x position is inside the map
+					&& calculated_position.y < mask_height as f32 // And if next possible y position is inside the map
+					&& map_mask[(calculated_position.y.floor() as i32 * mask_width + calculated_position.x.floor() as i32) as usize] // AND the position is collidable in the mask
+				{
+					// THEN we have collided with the map so return true
+					return true;
+				}
+
+				/* Entity on entity hate crime!!! (entity on entity collision) */
+				for other_slugcat in other_slugcats.iter()
+				{
+					// Skip collision detection if the current slugcat is ourselves
+					if other_slugcat.name == self.name {continue;}
+
+					// Distance between slugcats
+					let slug_distance: iVector2 = iVector2::new(
+						((calculated_position.x - other_slugcat.position.x).floor() as i32),
+						((calculated_position.y - other_slugcat.position.y).floor() as i32)
+					);
+
+					// Collision detection
+					if slug_distance.x < 0 // If left horizontal distance is less than 0
+						|| slug_distance.y < 0 // And if upper vertical distance is less than 0
+						|| slug_distance.x >= other_slugcat.width // And if right horizontal distance is less than 0
+						|| slug_distance.y >= other_slugcat.height // And if lower veritcal distance is less than 0
+					{
+						// No collision happened. Skip this iteration
+						continue;
+					}
+
+					let other_slug_index: usize = (slug_distance.y * other_slugcat.width + slug_distance.x) as usize;
+					
+					// Check if we're overlapping into the other slugcat's mask
+					if other_slugcat.mask[other_slug_index]
+					{
+						// Return true if we have collided
+						return true;
+					}
+				}
+			}
+		}
+
+		return false;
+	}
+
+	// this is a fucking mess btw
+	// assumes mask width & height are the same as the screen size
+	pub fn update (
 		&mut self,
 		screen_width: i32,
 		screen_height: i32,
 		delta_time: f32,
 		map_mask: &[bool],
-		mask_width: i32,
-		mask_height: i32,
-		other_slugcats: &Vec<CollisionData>,
+		other_slugcats: &Vec<CollisionData>
 	) {
-		let mut rng: rand::prelude::ThreadRng = rand::rng();
-		let next_x = self.position.x + self.speed.x * delta_time;
-		let next_y = self.position.y + self.speed.y * delta_time;
-	
-		// ─── HORIZONTAL TEST ────────────────────────────────────────────────────────
-		let mut collided_x = false;
-		'horizontal: for y in 0..self.height {
-			for x in 0..self.width {
-				let idx = (y * self.width + x) as usize;
-				if !self.mask[idx] { continue; }
-	
-				let wx = next_x + x as f32;
-				let wy = self.position.y + y as f32;
-	
-				// 1) map collision
-				if wx >= 0.0 && wy >= 0.0
-				   && wx < mask_width  as f32
-				   && wy < mask_height as f32
-				   && map_mask[(wy as i32 * mask_width + wx as i32) as usize]
-				{
-					collided_x = true;
-					break 'horizontal;
-				}
-	
-				// 2) entity–entity collision
-				for other in other_slugcats.iter() {
-					if other.name == self.name { continue; }
-	
-					let rel_x = (wx - other.position.x).floor() as i32;
-					let rel_y = (wy - other.position.y).floor() as i32;
-					if rel_x < 0 || rel_y < 0 || rel_x >= other.width || rel_y >= other.height {
-						continue;
-					}
-					let other_idx = (rel_y * other.width + rel_x) as usize;
-					if other.mask[other_idx] {
-						collided_x = true;
-						break 'horizontal;
-					}
-				}
-			}
-		}
-		if collided_x {
+		// For determining random speeds
+		let mut rng = rand::rng();
+
+		// Calculate next potential position
+		let dest: Vector2 = Vector2::new(
+			self.position.x + self.speed.x * delta_time,
+			self.position.y + self.speed.y * delta_time
+		);
+		
+		// setting these for readability
+		let mask_width: i32 = screen_width;
+		let mask_height: i32 = screen_height;
+
+
+		// horizontal collisions check
+		// this is biiig and faat btw....
+		let mut collided_x: bool = self.check_collision(AxisDirection::X, &dest, mask_width, mask_height, map_mask, other_slugcats);
+		let mut collided_y: bool = self.check_collision(AxisDirection::Y, &dest, mask_width, mask_height, map_mask, other_slugcats);
+
+		if collided_x
+		{
+			// If collided horizontally, reverse and apply a random speed on the horizontal axis
 			self.speed.x = -self.speed.x.signum() * rng.random_range(MIN_SPEED..MAX_SPEED) as f32;
 		} else {
-			self.position.x = next_x;
+			// Otherwise set the next x position to the next possible one
+			self.position.x = dest.x;
 		}
-	
-		// ─── VERTICAL TEST ──────────────────────────────────────────────────────────
-		let mut collided_y = false;
-		'vertical: for y in 0..self.height {
-			for x in 0..self.width {
-				let idx = (y * self.width + x) as usize;
-				if !self.mask[idx] { continue; }
-	
-				let wx = self.position.x + x as f32;
-				let wy = next_y + y as f32;
-	
-				// 1) map collision
-				if wx >= 0.0 && wy >= 0.0
-				   && wx < mask_width  as f32
-				   && wy < mask_height as f32
-				   && map_mask[(wy as i32 * mask_width + wx as i32) as usize]
-				{
-					collided_y = true;
-					break 'vertical;
-				}
-	
-				// 2) entity–entity collision
-				for other in other_slugcats.iter() {
-					if other.name == self.name { continue; }
-	
-					let rel_x = (wx - other.position.x).floor() as i32;
-					let rel_y = (wy - other.position.y).floor() as i32;
-					if rel_x < 0 || rel_y < 0 || rel_x >= other.width || rel_y >= other.height {
-						continue;
-					}
-					let other_idx = (rel_y * other.width + rel_x) as usize;
-					if other.mask[other_idx] {
-						collided_y = true;
-						break 'vertical;
-					}
-				}
-			}
-		}
-		if collided_y {
+
+		if collided_y
+		{
+			// If collided vertically, reverse and apply a random speed on the vertical axis
 			self.speed.y = -self.speed.y.signum() * rng.random_range(MIN_SPEED..MAX_SPEED) as f32;
 		} else {
-			self.position.y = next_y;
+			// Otherwise set the next y position to the next possible one
+			self.position.y = dest.y;
 		}
-	
-		// ─── SCREEN BOUNDS ──────────────────────────────────────────────────────────
-		if self.position.x < 0.0 || self.position.x + self.width as f32 > screen_width as f32 {
-			self.speed.x = -self.speed.x;
+
+		// Screen boundries
+		if self.position.x < 0f32 || self.position.x + self.width as f32 > screen_width as f32
+		{
+			self.speed.x = -self.speed.x.signum() * rng.random_range(MIN_SPEED..MAX_SPEED) as f32;
 		}
-		if self.position.y < 0.0 || self.position.y + self.height as f32 > screen_height as f32 {
-			self.speed.y = -self.speed.y;
+		if self.position.y < 0f32 || self.position.y + self.height as f32 > screen_height as f32
+		{
+			self.speed.y = -self.speed.y.signum() * rng.random_range(MIN_SPEED..MAX_SPEED) as f32;
 		}
 	}
 }
@@ -285,7 +316,6 @@ impl Food
 
 			if slugcat_col_box.check_collision_recs(&food_col_box)
 			{
-				println!("yeah im eating this shit");
 				return slugcat.name.clone();
 			}
 		}

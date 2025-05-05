@@ -6,7 +6,6 @@ use std::{fs, path, io::Read};
 use crate::entity;
 use crate::enums::GameState;
 use crate::Viewport;
-
 pub struct iVector2
 {
 	pub x: i32,
