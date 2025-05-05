@@ -55,3 +55,12 @@ Located in DATA/maps, a map folder must contain
 
 **Your bg.png and col_map.png MUST BE 1024x768.**
 If you don't like this size, you can change the SCREEN_WIDTH & SCREEN_HEIGHT variables in main.rs and recompile but this will make pre-packaged maps incompatiable
+
+# Additional stuff
+There are a few special slugcats in the program. Namely:
+- Kor (me)
+- Vulkan ([Vulkāns](https://x.com/Wheedless))
+- Swordmaster ([Ikepike](https://x.com/ikepik3))
+
+Special thanks:
+Amy Lee from Evanescence
