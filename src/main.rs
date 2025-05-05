@@ -6,7 +6,6 @@ use std::slice;
 
 mod entity;
 mod enums;
-mod assets;
 mod map;
 mod rendersystem;
 mod timer;
@@ -69,8 +68,8 @@ fn main()
 	);
 
 	// Music & Sound
-	let race_track_path = assets::get_music_name(GameState::InRace);
-	let win_track_path: String = assets::get_music_name(GameState::Win);
+	let race_track_path = utils::get_music_name(GameState::InRace);
+	let win_track_path: String = utils::get_music_name(GameState::Win);
 
 	let mut race_track = audio_sys.new_music(&race_track_path).expect("Failed to load race music!");
 	let mut win_track = audio_sys.new_music(&win_track_path).expect("Failed to load win music!");
@@ -84,9 +83,9 @@ fn main()
 
 	// Load other assets
 	// Does not matter what game state you are in, they will be loaded
-	let map_name: String = assets::get_map_name_from_file();
+	let map_name: String = utils::get_map_name_from_file();
 	let map: map::Map = map::Map::new(&map_name, &mut viewport);
-	let mut slugcats: Vec<entity::Slugcat> = assets::load_slugcats(&mut viewport, map.gate_spawn_pos);
+	let mut slugcats: Vec<entity::Slugcat> = utils::load_slugcats(&mut viewport, map.gate_spawn_pos);
 
 	let mut win_image: Texture2D = viewport.load_image("DATA/racers/win/_default.png");
 

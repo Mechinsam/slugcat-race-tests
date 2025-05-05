@@ -1,10 +1,28 @@
+// Misc. helper functions
+
 use rand::seq::IndexedRandom;
-// This file contains the info for loading slugcat sprites and win screens
 use raylib::prelude::*;
 use std::{fs, path, io::Read};
 use crate::entity;
 use crate::enums::GameState;
 use crate::Viewport;
+
+pub struct iVector2
+{
+	pub x: i32,
+	pub y: i32
+}
+
+impl iVector2
+{
+	pub fn new(x: i32, y: i32) -> Self
+	{
+		iVector2 {
+			x,
+			y
+		}
+	}
+}
 
 pub fn load_slugcats(viewport: &mut Viewport, gate_spawn_pos: Vector2) -> Vec<entity::Slugcat>
 {
