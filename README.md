@@ -52,6 +52,10 @@ Located in DATA/maps, a map folder must contain
 - bg.png - background image
 - col_map.png - a collision map in the form of an image. Red parts are where collisions can occur, and regions with below 25% opcaity (idealy 0%), are free zones. Borders of the image do not need their collision highlighted
 - food.png - Food sprite to use for that level. Keep it roughly 200x400 to not affect scaling
+- metadata.json - Contains the key 'gate_spawn_pos' (slugcat spawn position sorted in columns from their origin (top left corner)).
+  Also contains the key 'food_spawn_pos'. This is where the food sprite spawns.
+
+Use the 'd' key in the program to enable debug mode to see your fps and mouse position (useful for figuring out spawn positions).
 
 **Your bg.png and col_map.png MUST BE 1024x768.**
 If you don't like this size, you can change the SCREEN_WIDTH & SCREEN_HEIGHT variables in main.rs and recompile but this will make pre-packaged maps incompatiable
