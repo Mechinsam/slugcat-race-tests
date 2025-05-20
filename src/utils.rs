@@ -115,6 +115,7 @@ pub fn get_map_name_from_file() -> String
 	let mut map_name: String = String::new();
 
 	file.read_to_string(&mut map_name).expect("Couldn't read 'map.txt'!");
+	map_name = map_name.replace('\n', "").replace('\r', "");
 
 	let map_path = format!("DATA/maps/{}", map_name);
 
